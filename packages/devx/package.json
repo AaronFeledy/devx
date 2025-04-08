@@ -1,0 +1,16 @@
+{
+  "name": "devx",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "engine": "workspace:*",
+    "builder": "workspace:*",
+    "stack": "workspace:*"
+  }
+}
