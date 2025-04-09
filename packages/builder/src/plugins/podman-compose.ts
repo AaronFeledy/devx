@@ -1,9 +1,10 @@
-import { StackConfig } from '@devx/stack';
+import type { StackConfig } from '@devx/stack';
 import * as yaml from 'yaml';
-import { BuilderPlugin } from '../types';
-import { runCommand } from '@devx/cli';
+import type { BuilderPlugin, BuildResult } from '../types';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
+import { existsSync, mkdirSync } from 'fs';
+import { runCommand } from '../util/command';
 
 /**
  * Implements the BuilderPlugin interface for the podman-compose orchestrator.
@@ -15,124 +16,166 @@ export class PodmanComposeBuilderPlugin implements BuilderPlugin {
   /** @inheritdoc */
   name = 'podman-compose';
 
-  /**
-   * Generates the full path for the podman-compose configuration file.
-   * The file is placed inside a `.devx` directory within the project path.
-   *
-   * @param projectPath - The root path of the project.
-   * @param stackName - The name of the stack.
-   * @returns The absolute path to the generated compose file.
-   * @private
-   */
-  private async getComposeFilePath(projectPath: string, stackName: string): Promise<string> {
-    // Consider placing generated files in a .devx folder within the project
-    const devxDir = path.join(projectPath, '.devx');
-    await fs.mkdir(devxDir, { recursive: true });
-    return path.join(devxDir, `podman-compose.${stackName}.yaml`);
-  }
-
   /** @inheritdoc */
-  async generateConfig(stack: StackConfig): Promise<string> {
-    // Basic transformation - might need refinement based on StackConfig structure
-    const composeConfig = {
-      version: stack.version || '3.8', // Default or from stack config
-      services: stack.services,
-      networks: stack.networks,
-      volumes: stack.volumes,
+  async generateConfig(stack: StackConfig, projectPath: string): Promise<string> {
+    const composeData: any = {
+      version: stack.version || '3.8',
+      services: {},
+      volumes: {},
+      networks: {},
     };
-    return yaml.stringify(composeConfig);
+
+    for (const [name, service] of Object.entries(stack.services)) {
+        const serviceDef: any = {};
+        if (service.image) serviceDef.image = service.image;
+        if (service.build) {
+            serviceDef.build = typeof service.build === 'string'
+                ? path.resolve(projectPath, service.build)
+                : {
+                    ...service.build,
+                    context: path.resolve(projectPath, service.build.context),
+                  };
+        }
+        if (service.ports) serviceDef.ports = service.ports;
+        if (service.volumes) serviceDef.volumes = service.volumes;
+        if (service.environment) serviceDef.environment = service.environment;
+        if (service.depends_on) serviceDef.depends_on = service.depends_on;
+        if (service.networks) serviceDef.networks = service.networks;
+        composeData.services[name] = serviceDef;
+    }
+
+    if (stack.volumes) composeData.volumes = stack.volumes;
+    if (stack.networks) composeData.networks = stack.networks;
+
+    if (Object.keys(composeData.volumes).length === 0) delete composeData.volumes;
+    if (Object.keys(composeData.networks).length === 0) delete composeData.networks;
+
+    return yaml.stringify(composeData);
   }
 
   /**
-   * Generates the podman-compose configuration and writes it to the designated file path.
-   *
-   * @param stack - The stack configuration.
-   * @param projectPath - The project root path.
-   * @returns The path to the written compose file.
-   * @private
+   * Determines the path for the podman-compose file.
    */
-  private async writeComposeFile(stack: StackConfig, projectPath: string): Promise<string> {
-    const configContent = await this.generateConfig(stack);
-    const composeFilePath = await this.getComposeFilePath(projectPath, stack.name);
-    await fs.writeFile(composeFilePath, configContent, 'utf-8');
-    console.log(`Generated podman-compose file: ${composeFilePath}`);
-    return composeFilePath;
+  private getComposeFilePath(projectPath: string, stackName: string): string {
+    return path.resolve(
+      projectPath,
+      '.devx',
+      'dist',
+      `${stackName}.podman-compose.yaml`
+    );
+  }
+
+  /**
+   * Generates and writes the compose file.
+   */
+  private async writeComposeFile(
+    stack: StackConfig,
+    projectPath: string
+  ): Promise<string> {
+    const composeFilePath = this.getComposeFilePath(projectPath, stack.name);
+    try {
+      const composeConfigStr = await this.generateConfig(stack, projectPath);
+      const outputDir = path.dirname(composeFilePath);
+      if (!existsSync(outputDir)) {
+        mkdirSync(outputDir, { recursive: true });
+      }
+      await fs.writeFile(composeFilePath, composeConfigStr);
+      this.log(`Generated podman-compose file: ${composeFilePath}`);
+      return composeFilePath;
+    } catch (error) {
+      this.error(`Error writing podman-compose file: ${error}`);
+      throw error;
+    }
   }
 
   /** @inheritdoc */
-  async build(stack: StackConfig, projectPath: string): Promise<void> {
+  async build(
+    stack: StackConfig,
+    options?: Record<string, any>
+  ): Promise<BuildResult | void> {
+    const projectPath = options?.projectPath ?? process.cwd();
     const composeFilePath = await this.writeComposeFile(stack, projectPath);
-    console.log(`Running build for stack "${stack.name}" using ${composeFilePath}...`);
     try {
-      await runCommand(`podman-compose -f "${composeFilePath}" build`, projectPath);
-      console.log(`Stack "${stack.name}" build completed.`);
+      this.log('Building images using podman-compose...');
+      await runCommand('podman-compose', ['-f', composeFilePath, 'build'], {
+        cwd: projectPath,
+      });
+      this.log('Images built successfully.');
+      return;
     } catch (error) {
-      console.error(`Error building stack "${stack.name}":`, error);
-      throw error; // Re-throw the error to signal failure
+      this.error(`Error building images: ${error}`);
+      throw error;
     }
   }
 
   /** @inheritdoc */
   async start(stack: StackConfig, projectPath: string): Promise<void> {
-    const composeFilePath = await this.writeComposeFile(stack, projectPath); // Ensure config exists
-    console.log(`Starting stack "${stack.name}" using ${composeFilePath}...`);
+    const composeFilePath = await this.writeComposeFile(stack, projectPath);
     try {
-      // Use -d to run in detached mode, --build to ensure images are up-to-date.
-      // Consider --remove-orphans to clean up containers not defined in the current config.
-      await runCommand(`podman-compose -f "${composeFilePath}" up -d --build --remove-orphans`, projectPath);
-      console.log(`Stack "${stack.name}" started successfully.`);
+      this.log('Starting stack using podman-compose...');
+      await runCommand('podman-compose', ['-f', composeFilePath, 'up', '-d'], {
+        cwd: projectPath,
+      });
+      this.log('Stack started successfully.');
     } catch (error) {
-      console.error(`Error starting stack "${stack.name}":`, error);
+      this.error(`Error starting stack: ${error}`);
       throw error;
     }
   }
 
   /** @inheritdoc */
   async stop(stack: StackConfig, projectPath: string): Promise<void> {
-    const composeFilePath = await this.getComposeFilePath(projectPath, stack.name);
-    console.log(`Attempting to stop stack "${stack.name}" using ${composeFilePath}...`);
+    const composeFilePath = this.getComposeFilePath(projectPath, stack.name);
+    if (!existsSync(composeFilePath)) {
+      this.warn(
+        `Compose file ${composeFilePath} not found. Cannot stop stack without config.`
+      );
+      return;
+    }
     try {
-      // Check if the compose file exists before trying to run `down`.
-      await fs.access(composeFilePath);
-      await runCommand(`podman-compose -f "${composeFilePath}" down`, projectPath);
-      console.log(`Stack "${stack.name}" stopped.`);
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        // If the file doesn't exist, the stack might have been already stopped/destroyed or wasn't managed correctly.
-        console.warn(`Compose file not found: ${composeFilePath}. Stack "${stack.name}" might already be stopped or was not started by devx.`);
-      } else {
-        console.error(`Error stopping stack "${stack.name}":`, error);
-        throw error; // Re-throw other errors
-      }
+      this.log('Stopping stack using podman-compose...');
+      await runCommand('podman-compose', ['-f', composeFilePath, 'down'], {
+        cwd: projectPath,
+      });
+      this.log('Stack stopped successfully.');
+    } catch (error) {
+      this.error(`Error stopping stack: ${error}`);
+      throw error;
     }
   }
 
   /** @inheritdoc */
   async destroy(stack: StackConfig, projectPath: string): Promise<void> {
-    const composeFilePath = await this.getComposeFilePath(projectPath, stack.name);
-    console.log(`Attempting to destroy stack "${stack.name}" using ${composeFilePath}...`);
-    try {
-      await fs.access(composeFilePath);
-      // Use --volumes to ensure associated volumes are also removed.
-      await runCommand(`podman-compose -f "${composeFilePath}" down --volumes`, projectPath);
-      console.log(`Stack "${stack.name}" containers and networks removed.`);
-
-      // Clean up the generated compose file.
-      try {
-        await fs.unlink(composeFilePath);
-        console.log(`Removed compose file: ${composeFilePath}`);
-      } catch (unlinkError) {
-        console.warn(`Could not remove compose file ${composeFilePath}:`, unlinkError);
-      }
-      console.log(`Stack "${stack.name}" destroyed successfully.`);
-
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        console.warn(`Compose file not found: ${composeFilePath}. Stack "${stack.name}" might already be destroyed or was not started by devx.`);
-      } else {
-        console.error(`Error destroying stack "${stack.name}":`, error);
-        throw error;
-      }
+    const composeFilePath = this.getComposeFilePath(projectPath, stack.name);
+    if (!existsSync(composeFilePath)) {
+      this.warn(
+        `Compose file ${composeFilePath} not found. Cannot destroy stack without config.`
+      );
+      return;
     }
+    try {
+      this.log(
+        'Destroying stack using podman-compose (including volumes)...'
+      );
+      await runCommand('podman-compose', ['-f', composeFilePath, 'down', '-v'], {
+        cwd: projectPath,
+      });
+      this.log('Stack destroyed successfully.');
+    } catch (error) {
+      this.error(`Error destroying stack: ${error}`);
+      throw error;
+    }
+  }
+
+  // --- Helper Methods ---
+
+  private log(message: string) {
+    console.log(`[PodmanComposeBuilder] ${message}`);
+  }
+  private error(message: string) {
+    console.error(`[PodmanComposeBuilder] ERROR: ${message}`);
+  }
+  private warn(message: string) {
+    console.warn(`[PodmanComposeBuilder] WARN: ${message}`);
   }
 } 

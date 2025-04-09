@@ -14,7 +14,10 @@
         "sourceMap": true, // Generate sourcemaps for JS files
         "noEmitOnError": true, // Don't emit if errors occur
         "allowImportingTsExtensions": false, // Usually false for libraries
-        "noEmit": false // Ensure emit is enabled by default
+        "noEmit": false, // Ensure emit is enabled by default
+        "types": [
+            "bun-types"
+        ] // Add bun-types here
 
         // Consider adding paths for workspace aliases if needed later
         // "paths": {

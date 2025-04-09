@@ -1,9 +1,9 @@
 import fs from 'fs/promises';
 import path from 'path';
-// import yaml from 'js-yaml';
 import YAML from 'yaml';
 import { ZodError } from 'zod';
-import { StackConfig, StackConfigSchema } from './schema';
+import type { StackConfig } from './schema';
+import { StackConfigSchema } from './schema';
 
 /**
  * Custom error class for stack configuration parsing and validation errors.

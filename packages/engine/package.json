@@ -1,11 +1,46 @@
 {
-  "name": "engine",
-  "module": "index.ts",
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
+  "name": "@devx/engine",
+  "version": "0.1.0",
+  "description": "Abstracts container management tools for runtime operations.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:ts": "tsc --build",
+    "clean": "rm -rf dist",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts"
   },
-  "peerDependencies": {
-    "typescript": "^5.8.3"
+  "dependencies": {
+    "@devx/stack": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.8.3",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "devx",
+    "engine",
+    "container",
+    "podman",
+    "docker"
+  ],
+  "author": "Aaron Feledy <aaron@arrow.one>",
+  "license": "GPL-3.0-only",
+  "homepage": "https://github.com/AaronFeledy/devx#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AaronFeledy/devx.git",
+    "directory": "packages/engine"
+  },
+  "bugs": {
+    "url": "https://github.com/AaronFeledy/devx/issues"
   }
 }

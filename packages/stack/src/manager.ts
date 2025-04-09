@@ -2,7 +2,9 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { parseStackConfigFile, StackParseError } from './parser';
-import { StackConfig } from './schema';
+import type { StackConfig } from './schema';
+import { resolve } from 'path';
+import findUp from 'find-up';
 
 /** Default filenames to search for stack configurations. */
 const DEFAULT_STACK_FILES = ['.stack.yml', '.stack.yaml', '.stack.json'];

@@ -3,16 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "devDependencies": {
+    "@types/bun": "^1.2.8",
+    "@types/node": "^20.12.7",
     "eslint": "^9.24.0",
     "prettier": "^3.5.3",
-    "typescript": "^5.8.3",
-    "@types/node": "^20.12.7"
+    "typescript": "^5.8.3"
   },
   "workspaces": [
     "packages/cli",
     "packages/stack",
     "packages/builder",
     "packages/engine",
+    "packages/devx",
     "packages/rest"
   ],
   "scripts": {

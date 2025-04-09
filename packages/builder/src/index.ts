@@ -1,5 +1,6 @@
-import { BuilderPlugin } from './types';
+import type { BuilderPlugin } from './types';
 import { PodmanComposeBuilderPlugin } from './plugins/podman-compose';
+import { BuilderManager } from './BuilderManager';
 
 /**
  * A registry to store available builder plugins.
@@ -76,6 +77,14 @@ export function getAvailableBuilderPlugins(): string[] {
 const podmanComposePlugin = new PodmanComposeBuilderPlugin();
 registerBuilderPlugin(podmanComposePlugin);
 
+// Instantiate managers and plugins
+const builderManager = new BuilderManager();
+// Manually register known plugins for now
+// TODO: Remove this once the plugin system is fully implemented
+builderManager.registerPlugin(new PodmanComposeBuilderPlugin());
+
 // --- Exports --- //
-// Export the core plugin interface and the registry functions.
-export * from './types'; 
+export * from './types';
+export { BuilderManager }; // Export the class
+export { builderManager }; // Export the instance
+export * from './plugins/podman-compose'; // Export plugin 

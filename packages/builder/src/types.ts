@@ -1,9 +1,17 @@
-import { StackConfig } from '@devx/stack';
+import type { StackConfig } from '@devx/stack';
 
 /**
  * Represents the configuration for a development stack,
  * typically parsed from a .stack.yml file.
  */
+
+/**
+ * Represents the result of a successful build operation.
+ */
+export interface BuildResult {
+    /** Optional path to a generated manifest file (e.g., Kubernetes YAML). */
+    manifestPath?: string;
+}
 
 /**
  * Interface defining the contract for a Builder Plugin.
@@ -25,28 +33,26 @@ export interface BuilderPlugin {
    * based on the provided stack configuration.
    *
    * @param stack - The parsed `StackConfig` object representing the desired state.
+   * @param projectPath - The absolute path to the project directory.
    * @returns A promise that resolves with the configuration file content as a string.
    * @throws {Error} If the configuration generation fails.
    */
-  generateConfig(stack: StackConfig): Promise<string>;
+  generateConfig(stack: StackConfig, projectPath: string): Promise<string>;
 
   /**
-   * Builds the necessary container images defined in the stack configuration.
-   * This maps to commands like `docker-compose build` or might be part of `up`.
+   * Builds the necessary container images or configurations defined in the stack.
    *
    * @param stack - The `StackConfig` object.
-   * @param projectPath - The absolute path to the project directory containing the stack configuration.
-   *                    This is often needed to resolve relative paths in the stack config (e.g., build contexts).
-   * @returns A promise that resolves when the build process is complete.
+   * @param options - Builder-specific options from the stack config or global config.
+   * @returns A promise that resolves with BuildResult (e.g., path to generated manifest) or void.
    * @throws {Error} If the build process fails.
    */
-  build(stack: StackConfig, projectPath: string): Promise<void>;
+  build(stack: StackConfig, options?: Record<string, any>): Promise<BuildResult | void>;
 
   /**
    * Starts the services defined in the stack configuration.
    * This typically involves creating networks, volumes, and containers.
-   * It often implies building images if they don't exist or if specified.
-   * Maps to commands like `podman-compose up -d`.
+   * Implies build if not already built.
    *
    * @param stack - The `StackConfig` object.
    * @param projectPath - The absolute path to the project directory.
@@ -57,8 +63,6 @@ export interface BuilderPlugin {
 
   /**
    * Stops the running services defined in the stack configuration.
-   * This usually stops and removes the containers but leaves networks and volumes intact.
-   * Maps to commands like `podman-compose down`.
    *
    * @param stack - The `StackConfig` object.
    * @param projectPath - The absolute path to the project directory.
@@ -68,9 +72,7 @@ export interface BuilderPlugin {
   stop(stack: StackConfig, projectPath: string): Promise<void>;
 
   /**
-   * Stops and removes all resources associated with the stack configuration,
-   * including containers, networks, and potentially volumes.
-   * Maps to commands like `podman-compose down --volumes`.
+   * Stops and removes all resources associated with the stack configuration.
    *
    * @param stack - The `StackConfig` object.
    * @param projectPath - The absolute path to the project directory.
