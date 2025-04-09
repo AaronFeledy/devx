@@ -2,18 +2,23 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
-    "composite": true
+    "rootDir": ".",
+    "composite": true,
+    "moduleResolution": "bundler"
   },
   "include": [
-    "src/**/*.ts"
+    "index.ts"
   ],
   "exclude": [
-    "dist",
-    "node_modules"
+    "node_modules",
+    "dist"
   ],
   "references": [
-    // Add references as needed, e.g.:
-    // { "path": "../stack" }
+    {
+      "path": "../common"
+    },
+    {
+      "path": "../stack"
+    }
   ]
 }

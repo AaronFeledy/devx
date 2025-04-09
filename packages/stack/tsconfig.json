@@ -3,13 +3,23 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "composite": true
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*"
   ],
   "exclude": [
-    "dist",
-    "node_modules"
+    "node_modules",
+    "dist"
+  ],
+  "references": [
+    {
+      "path": "../common"
+    }
   ]
 }

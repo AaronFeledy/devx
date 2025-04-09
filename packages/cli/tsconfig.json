@@ -18,13 +18,14 @@
     "bin"
   ],
   "references": [
-    // Add references to other packages cli depends on, e.g.:
+    {
+      "path": "../common"
+    },
     {
       "path": "../stack"
     },
     {
-      "path": "../builder"
-    },
-    // { "path": "../engine" }
+      "path": "../devx"
+    }
   ]
 }

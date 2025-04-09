@@ -15,7 +15,8 @@
     "packages/builder",
     "packages/engine",
     "packages/devx",
-    "packages/rest"
+    "packages/rest",
+    "packages/common"
   ],
   "scripts": {
     "build": "bun run build:ts",
