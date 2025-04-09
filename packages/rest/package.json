@@ -1,14 +1,12 @@
 {
-  "name": "rest",
-  "module": "index.ts",
-  "type": "module",
+  "name": "@devx/rest",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {},
   "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.8.3"
-  },
-  "dependencies": {
-    "devx": "workspace:*"
+    "typescript": "^5.8.3",
+    "@types/node": "^20.12.7"
   }
 }

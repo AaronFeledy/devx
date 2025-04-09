@@ -1,16 +1,24 @@
 {
   "name": "devx",
-  "module": "index.ts",
-  "type": "module",
+  "version": "0.1.0",
+  "private": true,
   "devDependencies": {
-    "@types/bun": "latest",
     "eslint": "^9.24.0",
-    "prettier": "^3.5.3"
-  },
-  "peerDependencies": {
-    "typescript": "^5.8.3"
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "@types/node": "^20.12.7"
   },
   "workspaces": [
-    "packages/*"
-  ]
+    "packages/cli",
+    "packages/stack",
+    "packages/builder",
+    "packages/engine",
+    "packages/rest"
+  ],
+  "scripts": {
+    "build": "bun run build:ts",
+    "build:ts": "tsc --build --verbose",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write ."
+  }
 }

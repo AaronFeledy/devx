@@ -10,13 +10,15 @@
   - [CLI](#cli)
   - [REST API](#rest-api)
 - [Configuration](#configuration)
-  - [Stack Definition](#stack-definition)
+  - [Stack Definition (`.stack.yml`)](#stack-definition-stackyml)
   - [Global Configuration](#global-configuration)
-- [Plugins](#plugins)
-  - [Engine Plugins](#engine-plugins)
-  - [Builder Plugins](#builder-plugins)
-  - [Recipes](#recipes)
-  - [Tasks](#tasks)
+- [Architecture](#architecture)
+  - [Core Packages](#core-packages)
+  - [Plugin System](#plugin-system)
+    - [Engine Plugins](#engine-plugins)
+    - [Builder Plugins](#builder-plugins)
+    - [Recipes](#recipes)
+    - [Tasks](#tasks)
 - [Global Stacks](#global-stacks)
 - [Contributing](#contributing)
 - [License](#license)
@@ -24,9 +26,9 @@
 ## Features
 
 - **Cross-Platform Support**: Works on Linux, macOS, and Windows.
-- **Container Management Abstraction**: Supports multiple container engines (initially Podman) through a plugin system.
-- **Orchestration Abstraction**: Supports orchestrators like podman-compose, with easy extension to others.
-- **Stack Definitions**: Define development environments using a simple YAML or JSON configuration, inspired by docker-compose and Lando.
+- **Container Management Abstraction**: Supports multiple container engines (initially Podman) through Engine plugins.
+- **Orchestration Abstraction**: Supports orchestrators like podman-compose via Builder plugins, with easy extension to others.
+- **Stack Definitions**: Define development environments using a simple YAML configuration (`.stack.yml`), inspired by docker-compose and Lando.
 - **CLI and REST Interfaces**: Manage environments via command-line or REST API.
 - **Recipes**: Use pre-configured stack templates (e.g., LAMP) for quick setup.
 - **Global Stacks**: Automatically start services like a Traefik-based router for easy access to web servers.
@@ -39,12 +41,15 @@ DevX is distributed as a single executable file, making installation straightfor
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/) (for development and building)
-- [Podman](https://podman.io/) (downloaded automatically on first run)
+- [Bun](https://bun.sh/) (for development and building the project from source)
+- Container Engine: Podman is the default and recommended engine. DevX may attempt to help with installation or provide guidance.
+- Orchestrator (for default Builder): Podman Compose is used by the default builder plugin.
 
 ### Install DevX
 
-1. Download the latest release from the [releases page](https://github.com/your-org/devx/releases).
+*(Instructions for pre-built binary - TBD)*
+
+1. Download the latest release from the [releases page](https://github.com/AaronFeledy/devx/releases) (Link TBD).
 2. Make the binary executable (on Linux/macOS):
    ```sh
    chmod +x devx
@@ -54,97 +59,162 @@ DevX is distributed as a single executable file, making installation straightfor
    mv devx /usr/local/bin/
    ```
 
-Alternatively, you can build DevX from source:
+### Build from Source
 
 ```sh
-git clone https://github.com/your-org/devx.git
+git clone https://github.com/AaronFeledy/devx.git # Replace with actual URL
 cd devx
 bun install
-bun build ./packages/cli/index.ts --outdir dist --target bun
+bun run build # Uses tsc --build defined in root package.json
+# The executable will likely be in packages/cli/dist or a top-level dist folder
+# Link or move the final executable (e.g., dist/devx) to your PATH
 ```
 
 ## Usage
 
 ### CLI
 
-The DevX CLI provides a simple interface to manage your development environments.
+The DevX CLI provides a simple interface to manage your development environments based on a `.stack.yml` file in your project.
 
 #### Basic Commands
 
-- **Build a stack**: `devx build [stack-name]`
-- **Start a stack**: `devx start [stack-name]`
+- **Initialize a new stack**: `devx init [recipe-name] [options]` (Creates a `.stack.yml`)
+- **Build stack images**: `devx build [stack-name]`
+- **Start a stack**: `devx start [stack-name]` (Implies build if needed)
 - **Stop a stack**: `devx stop [stack-name]`
-- **Destroy a stack**: `devx destroy [stack-name]`
-- **Initialize a new stack**: `devx init [options]`
+- **Destroy a stack**: `devx destroy [stack-name]` (Stops and removes containers, networks, volumes)
+- **Get stack status**: `devx status [stack-name]`
+- **List available stacks**: `devx list`
 
-If no `stack-name` is provided, DevX will look for a `.stack.yml` in the current or parent directories.
+If no `stack-name` is provided, DevX will look for a `.stack.yml` in the current or parent directories and use the `name` property within that file.
 
-#### Initialization
+#### Initialization Examples
 
-To create a new stack, use the `init` command. You can pass options directly or use the interactive TUI.
+```sh
+# Interactively create a .stack.yml
+devx init
 
-- **Interactive**: `devx init` or `devx init lamp`
-- **With options**: `devx init lamp database=mysql web=apache`
+# Create a .stack.yml using the 'lamp' recipe
+devx init lamp
+
+# Create a .stack.yml for lamp with specific overrides
+devx init lamp database=mysql web=nginx runtime=php:8.2
+```
 
 ### REST API
 
-DevX also provides a REST API for programmatic control.
+DevX can run as a daemon providing a REST API for programmatic control.
 
-- Start the daemon: `devx daemon`
-- API Endpoints:
-  - `POST /stacks/:name/build`
+- Start the daemon: `devx daemon start`
+- Stop the daemon: `devx daemon stop`
+- API Endpoints (Example - TBD):
+  - `GET /stacks` - List managed stacks
+  - `POST /stacks` - Create/initialize a stack from config
+  - `GET /stacks/:name` - Get status of a specific stack
   - `POST /stacks/:name/start`
   - `POST /stacks/:name/stop`
-  - `POST /stacks/:name/destroy`
-  - `GET /stacks/:name/status`
+  - `POST /stacks/:name/build`
+  - `DELETE /stacks/:name` (Destroy)
+  - `GET /stacks/:name/config` (Get the config definition for the stack)
 
 ## Configuration
 
-### Stack Definition
+### Stack Definition (`.stack.yml`)
 
-Stacks are defined using a `.stack.yml` file, similar to docker-compose. Here's an example:
+Stacks are defined using a `.stack.yml` file in your project root, similar to docker-compose but potentially with higher-level abstractions provided by DevX recipes and plugins.
 
 ```yaml
-name: my-stack
+# .stack.yml
+name: my-web-app # Unique name for this stack
+
+# Optional: Specify which builder/engine plugins to use (if not default)
+# builder: podman-compose
+# engine: podman
+
 services:
   app:
-    image: my-app:latest
+    # Can be an image name or a build context
+    image: my-custom-app:latest
+    # Or use build:
+    # build: ./app
     ports:
       - "8080:80"
+    volumes:
+      - ./app:/var/www/html
+    environment:
+      - APP_ENV=development
+    depends_on:
+      - db
+
   db:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: supersecret
+      MYSQL_DATABASE: myapp_db
+    volumes:
+      - db_data:/var/lib/mysql
+
+# Define named volumes
+volumes:
+  db_data: {}
+
+# Define networks (often handled automatically)
+# networks:
+#   frontend:
+#   backend:
 ```
 
 ### Global Configuration
 
-Global settings, such as the default engine and builder plugins, are stored in `~/.devx/config.yml`. You can override these settings in individual stack configurations.
+Global settings (like the default engine and builder plugins, path to configurations, etc.) are stored in `~/.config/devx/config.yml` or a similar platform-specific location. These can be overridden by environment variables or settings within a specific `.stack.yml`.
 
-## Plugins
+## Architecture
 
-DevX is highly extensible through its plugin system.
+DevX utilizes a monorepo structure managed with Bun workspaces.
 
-### Engine Plugins
+### Core Packages
 
-Engine plugins manage container runtimes. The default plugin is for Podman.
+- **`@devx/cli`**: Provides the command-line interface.
+- **`@devx/stack`**: Handles parsing, validation, and management of `.stack.yml` configurations.
+- **`@devx/builder`**: Abstract interface and plugin system for orchestrators (like podman-compose).
+- **`@devx/engine`**: Abstract interface and plugin system for container runtimes (like Podman).
+- **`@devx/rest`**: Provides the REST API daemon.
+- **`@devx/common`**: (Potential) Shared utilities and types.
 
-### Builder Plugins
+### Plugin System
 
-Builder plugins handle orchestration. The default plugin is for podman-compose.
+DevX is designed to be extensible through various plugin types.
 
-### Recipes
+#### Engine Plugins
 
-Recipes provide pre-configured stack templates. For example, the LAMP recipe sets up a Linux, Apache, MySQL, and PHP environment.
+Engine plugins manage the interaction with container runtimes (Podman, Docker, etc.). They handle tasks like pulling images, managing containers directly (if needed), and inspecting runtime state.
+The default engine is Podman.
 
-### Tasks
+#### Builder Plugins
 
-Tasks allow you to define and run sequences of commands on the host or within containers.
+Builder plugins abstract the container *orchestration* layer. They take the validated `StackConfig` from the `@devx/stack` package and translate it into the format required by a specific orchestrator (like podman-compose, docker-compose, Kubernetes Kompose, etc.). They then invoke the orchestrator's commands (`up`, `down`, `build`). The default builder is `podman-compose`.
+
+#### Recipes
+
+Recipes provide pre-configured `.stack.yml` templates for common development setups (e.g., LAMP, MEAN, WordPress). The `devx init [recipe]` command uses these.
+
+#### Tasks
+
+Tasks allow defining and running sequences of commands either on the host machine or within specific service containers of a running stack (e.g., database migrations, dependency installation).
 
 ## Global Stacks
 
-Global stacks, like the Traefik router, are automatically started when any stack is active. They provide shared services across all stacks.
+Global stacks, like the Traefik-based router, could be automatically started when any DevX-managed stack is active. They provide shared services (like reverse proxying) across all local development stacks.
 
 ## Contributing
 
-We welcome contributions! Please see our [contributing guidelines](CONTRIBUTING.md) for more details.
+We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) (to be created) for guidelines on setting up the development environment, coding standards, and submitting pull requests.
+
+Key Steps:
+1. Fork the repository.
+2. Clone your fork.
+3. Run `bun install` in the root directory.
+4. Make your changes in the relevant package(s).
+5. Add tests for your changes.
+6. Run `bun run build` and `bun run lint`.
+7. Submit a pull request.
