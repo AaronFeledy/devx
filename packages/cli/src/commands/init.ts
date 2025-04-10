@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../lib/base-command';
+import { BaseCommand } from '../lib/base-command.js';
 import prompts from 'prompts';
 import { existsSync } from 'fs';
 import { writeFile } from 'fs/promises';
@@ -31,7 +31,6 @@ interface GeneratedStackConfig {
  * Supports both interactive (TUI) and non-interactive (key=value arguments) modes.
  */
 export default class Init extends BaseCommand<typeof Init> {
-
   static description =
     'Initializes a new DevX stack configuration (`.stack.yml`).';
 
@@ -94,7 +93,9 @@ export default class Init extends BaseCommand<typeof Init> {
 
     // Simpler filtering for key=value pairs:
     // Assume anything containing '=' and not starting with '-' is a key=value pair.
-    const rawKeyValues = this.argv.filter(arg => arg.includes('=') && !arg.startsWith('-'));
+    const rawKeyValues = this.argv.filter(
+      (arg) => arg.includes('=') && !arg.startsWith('-')
+    );
     const keyValueArgs = this.parseKeyValueArgs(rawKeyValues);
 
     const targetPath = path.resolve('.stack.yml');
@@ -146,31 +147,35 @@ export default class Init extends BaseCommand<typeof Init> {
     };
 
     for (const [key, value] of Object.entries(args)) {
-        if (key.startsWith('ports.')) {
-            // Handle ports.servicename=host:container
-            const serviceName = key.substring(6); // Remove 'ports.'
-            if (config.services[serviceName]) {
-                if (!config.services[serviceName].ports) {
-                    config.services[serviceName].ports = [];
-                }
-                config.services[serviceName].ports!.push(value);
-            } else {
-                this.warn(`Port specified for unknown service '${serviceName}'. Define the service first (e.g., ${serviceName}=image:tag).`);
-            }
+      if (key.startsWith('ports.')) {
+        // Handle ports.servicename=host:container
+        const serviceName = key.substring(6); // Remove 'ports.'
+        if (config.services[serviceName]) {
+          if (!config.services[serviceName].ports) {
+            config.services[serviceName].ports = [];
+          }
+          config.services[serviceName].ports!.push(value);
         } else {
-            // Assume other key=value pairs define services: name=image:tag
-            if (!config.services[key]) {
-                config.services[key] = { image: value };
-            } else {
-                // If service exists (maybe from a port arg first?), just set image
-                config.services[key].image = value;
-            }
+          this.warn(
+            `Port specified for unknown service '${serviceName}'. Define the service first (e.g., ${serviceName}=image:tag).`
+          );
         }
+      } else {
+        // Assume other key=value pairs define services: name=image:tag
+        if (!config.services[key]) {
+          config.services[key] = { image: value };
+        } else {
+          // If service exists (maybe from a port arg first?), just set image
+          config.services[key].image = value;
+        }
+      }
     }
 
-     if (Object.keys(config.services).length === 0) {
-         this.warn('No services defined via arguments. Creating an empty services block.');
-     }
+    if (Object.keys(config.services).length === 0) {
+      this.warn(
+        'No services defined via arguments. Creating an empty services block.'
+      );
+    }
 
     return config;
   }
@@ -182,7 +187,9 @@ export default class Init extends BaseCommand<typeof Init> {
    * @param stackNameFlag The stack name provided via the `--name` flag, used as a default.
    * @returns A promise that resolves to the generated stack configuration object based on user input.
    */
-  private async runInteractiveInit(stackNameFlag: string | undefined): Promise<GeneratedStackConfig> {
+  private async runInteractiveInit(
+    stackNameFlag: string | undefined
+  ): Promise<GeneratedStackConfig> {
     const stackNameDefault = stackNameFlag ?? path.basename(process.cwd());
 
     const responses = await prompts([
@@ -230,4 +237,4 @@ export default class Init extends BaseCommand<typeof Init> {
 
     return config;
   }
-} 
+}

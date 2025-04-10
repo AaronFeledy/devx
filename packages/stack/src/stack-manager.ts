@@ -1,4 +1,6 @@
 import { logger } from '@devx/common';
+// import type { StackConfig } from '@devx/common/schemas/stack'; // OLD
+import type { StackConfig } from '@devx/common'; // UPDATED
 // Import other necessary types/modules (e.g., Zod schema, config types) later
 
 // --- Placeholder Types --- (These will be defined properly later)
@@ -11,13 +13,7 @@ export interface StackInfo {
   // Add more details later (config path, services, etc.)
 }
 
-export interface StackConfig {
-  name: string;
-  // Add full stack config structure based on .stack.yml
-  services: Record<string, any>;
-  volumes?: Record<string, any>;
-  networks?: Record<string, any>;
-}
+
 
 // --- Placeholder Data --- (Replace with actual logic)
 const managedStacks: Map<StackId, StackInfo> = new Map([
@@ -42,10 +38,14 @@ export const listStacks = async (): Promise<StackInfo[]> => {
  * @param stackId - The ID or name of the stack.
  * @returns A promise resolving to the StackInfo object or null if not found.
  */
-export const getStackStatus = async (stackId: StackId): Promise<StackInfo | null> => {
+export const getStackStatus = async (
+  stackId: StackId
+): Promise<StackInfo | null> => {
   logger.info(`Getting status for stack ${stackId} (placeholder)`);
   // Find by ID or name (need robust lookup)
-  const stack = managedStacks.get(stackId) || Array.from(managedStacks.values()).find(s => s.name === stackId);
+  const stack =
+    managedStacks.get(stackId) ||
+    Array.from(managedStacks.values()).find((s) => s.name === stackId);
   // In reality: query engine/builder for live status
   return stack || null;
 };
@@ -82,8 +82,8 @@ export const startStack = async (stackId: StackId): Promise<void> => {
   stack.status = 'starting'; // Simulate async
   setTimeout(() => {
     if (managedStacks.has(stack.id)) {
-        managedStacks.get(stack.id)!.status = 'running';
-        logger.info(`Stack ${stackId} marked as running (placeholder)`);
+      managedStacks.get(stack.id)!.status = 'running';
+      logger.info(`Stack ${stackId} marked as running (placeholder)`);
     }
   }, 1500);
 };
@@ -99,12 +99,12 @@ export const stopStack = async (stackId: StackId): Promise<void> => {
   if (!stack) throw new Error(`Stack not found: ${stackId}`);
   // In reality: call builder.down()
   stack.status = 'stopping'; // Simulate async
-    setTimeout(() => {
-        if (managedStacks.has(stack.id)) {
-            managedStacks.get(stack.id)!.status = 'stopped';
-            logger.info(`Stack ${stackId} marked as stopped (placeholder)`);
-        }
-    }, 800);
+  setTimeout(() => {
+    if (managedStacks.has(stack.id)) {
+      managedStacks.get(stack.id)!.status = 'stopped';
+      logger.info(`Stack ${stackId} marked as stopped (placeholder)`);
+    }
+  }, 800);
 };
 
 /**

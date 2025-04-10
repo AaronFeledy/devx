@@ -24,4 +24,4 @@ export const GlobalConfigSchema = z.object({
 /**
  * Inferred TypeScript type from the GlobalConfigSchema.
  */
-export type GlobalConfig = z.infer<typeof GlobalConfigSchema>; 
+export type GlobalConfig = z.infer<typeof GlobalConfigSchema>;

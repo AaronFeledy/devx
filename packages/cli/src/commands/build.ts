@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../lib/base-command';
+import { BaseCommand } from '../lib/base-command.js';
 import { build as coreBuild } from '@devx/devx'; // Import the core build function
 
 /**
@@ -7,7 +7,6 @@ import { build as coreBuild } from '@devx/devx'; // Import the core build functi
  * It parses user arguments/flags and invokes the core build functionality.
  */
 export default class Build extends BaseCommand<typeof Build> {
-
   static description = 'Builds the specified development stack.';
 
   static examples = [
@@ -50,4 +49,4 @@ export default class Build extends BaseCommand<typeof Build> {
       throw error;
     }
   }
-} 
+}

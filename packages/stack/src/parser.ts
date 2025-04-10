@@ -1,9 +1,8 @@
-import fs from 'fs/promises';
-import path from 'path';
-import YAML from 'yaml';
-import { ZodError } from 'zod';
-import type { StackConfig } from './schema';
-import { StackConfigSchema } from './schema';
+import { z } from 'zod';
+import { existsSync, readFileSync } from 'fs';
+import * as yaml from 'yaml';
+import { StackConfigSchema, type StackConfig } from '@devx/common';
+import { logger } from '@devx/common';
 
 /**
  * Custom error class for stack configuration parsing and validation errors.
@@ -12,72 +11,85 @@ export class StackParseError extends Error {
   /**
    * Creates an instance of StackParseError.
    * @param message - The error message.
-   * @param originalError - The original error (e.g., from fs, yaml, or Zod) that caused this error.
+   * @param details - Additional details about the error.
    */
-  constructor(message: string, public originalError?: Error | ZodError) {
+  constructor(
+    message: string,
+    public details?: any
+  ) {
     super(message);
     this.name = 'StackParseError';
-    // Capture stack trace
-    if (originalError?.stack) {
-        this.stack = `${this.stack}\nCaused by: ${originalError.stack}`;
-    }
   }
 }
 
 /**
- * Parses and validates a stack configuration file (YAML or JSON).
+ * Parses the raw content of a stack configuration file (YAML or JSON).
  *
- * Supports `.yaml`, `.yml`, and `.json` file extensions.
- *
- * @param filePath - The absolute path to the stack configuration file.
- * @returns A promise that resolves with the validated StackConfig object.
- * @throws {StackParseError} If reading the file fails, parsing fails (invalid YAML/JSON),
- *                           or the configuration does not match the StackConfigSchema.
+ * @param content - The string content of the configuration file.
+ * @param filePath - The path to the file (used for error messages).
+ * @returns The parsed and validated StackConfig object.
+ * @throws {StackParseError} If parsing or validation fails.
  */
-export async function parseStackConfigFile(filePath: string): Promise<StackConfig> {
-  let rawContent: string;
+export function parseStackConfigFile(
+  content: string,
+  filePath: string
+): StackConfig {
+  let rawConfig: unknown;
   try {
-    rawContent = await fs.readFile(filePath, 'utf-8');
-  } catch (error: any) {
-    throw new StackParseError(`Failed to read stack file: ${filePath}`, error);
-  }
-
-  let parsedConfig: unknown; // Use unknown for safer type handling
-  const fileExt = path.extname(filePath).toLowerCase();
-
-  try {
-    if (fileExt === '.yaml' || fileExt === '.yml') {
-      // parsedConfig = yaml.load(rawContent);
-      parsedConfig = YAML.parse(rawContent);
-    } else if (fileExt === '.json') {
-      parsedConfig = JSON.parse(rawContent);
+    // Try parsing as YAML first, then fall back to JSON
+    if (filePath.endsWith('.yml') || filePath.endsWith('.yaml')) {
+      rawConfig = yaml.parse(content);
     } else {
-      // Should ideally be caught by file finding logic, but good to double-check
-      throw new Error(`Unsupported file extension: ${fileExt}. Only .yaml, .yml, or .json are supported.`);
+      rawConfig = JSON.parse(content);
     }
   } catch (error: any) {
-    // Catch errors from YAML.parse or JSON.parse
-    throw new StackParseError(`Failed to parse stack file content: ${filePath}`, error);
+    logger.error(`Failed to parse configuration file: ${filePath}`, error);
+    throw new StackParseError(
+      `Failed to parse configuration file: ${filePath}. Invalid ${filePath.endsWith('.yml') || filePath.endsWith('.yaml') ? 'YAML' : 'JSON'}.`,
+      error
+    );
   }
 
-  // Basic check before Zod parsing
-  if (typeof parsedConfig !== 'object' || parsedConfig === null) {
-    throw new StackParseError(`Invalid stack configuration format in ${filePath}. Expected a root object.`);
+  const result = StackConfigSchema.safeParse(rawConfig);
+
+  if (!result.success) {
+    logger.error(
+      `Invalid stack configuration in ${filePath}:`,
+      result.error.issues
+    );
+    throw new StackParseError(
+      `Invalid stack configuration in ${filePath}`,
+      result.error.issues
+    );
   }
 
+  return result.data;
+}
+
+/**
+ * Loads and validates a stack configuration file from a given path.
+ *
+ * @param filePath - The absolute or relative path to the `.stack.yml` or `.stack.json` file.
+ * @returns The validated StackConfig object.
+ * @throws {StackParseError} If the file doesn't exist, cannot be read, or is invalid.
+ */
+export function loadStackConfig(filePath: string): StackConfig {
+  if (!existsSync(filePath)) {
+    throw new StackParseError(
+      `Stack configuration file not found: ${filePath}`
+    );
+  }
+
+  let content: string;
   try {
-    // Validate the parsed object against the Zod schema
-    const validatedConfig = StackConfigSchema.parse(parsedConfig);
-    return validatedConfig;
-  } catch (error: unknown) {
-    if (error instanceof ZodError) {
-        // Log the detailed Zod error for debugging
-        console.error("Stack configuration validation failed:", JSON.stringify(error.errors, null, 2));
-        // Create a more user-friendly error message
-        const errorSummary = error.errors.map(e => `${e.path.join('.') || 'root'}: ${e.message}`).join('; ');
-        throw new StackParseError(`Stack configuration validation failed for ${filePath}: ${errorSummary}`, error);
-    }
-    // Handle unexpected errors during validation
-    throw new StackParseError(`An unexpected validation error occurred for ${filePath}`, error instanceof Error ? error : new Error(String(error)));
+    content = readFileSync(filePath, 'utf-8');
+  } catch (error: any) {
+    logger.error(`Failed to read configuration file: ${filePath}`, error);
+    throw new StackParseError(
+      `Failed to read configuration file: ${filePath}`,
+      error
+    );
   }
-} 
+
+  return parseStackConfigFile(content, filePath);
+}

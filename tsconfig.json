@@ -1,27 +1,36 @@
 {
-  "compilerOptions": {
-    // Enable latest features
-    "lib": ["ESNext", "DOM"],
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleDetection": "force",
-    "jsx": "react-jsx",
-    "allowJs": true,
-
-    // Bundler mode
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "noEmit": true,
-
-    // Best practices
-    "strict": true,
-    "skipLibCheck": true,
-    "noFallthroughCasesInSwitch": true,
-
-    // Some stricter flags (disabled by default)
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false
-  }
+  "files": [],
+  "references": [
+    // Add references to all packages in build order
+    {
+      "path": "./packages/common"
+    },
+    {
+      "path": "./packages/stack"
+    },
+    {
+      "path": "./packages/engine"
+    },
+    {
+      "path": "./packages/builder"
+    },
+    {
+      "path": "./packages/devx"
+    },
+    {
+      "path": "./packages/cli" // Depends on devx, common, stack
+    },
+    {
+      "path": "./packages/rest" // Depends on common, stack
+    },
+    {
+      "path": "./plugins/podman"
+    },
+    {
+      "path": "./plugins/podman-compose"
+    },
+    {
+      "path": "./plugins/router"
+    }
+  ]
 }

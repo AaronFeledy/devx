@@ -12,4 +12,4 @@ process.env.NODE_ENV = 'development';
 oclif
   .run(process.argv.slice(2), __dirname)
   .then(oclif.flush)
-  .catch(oclif.Errors.handle); 
+  .catch(oclif.Errors.handle);

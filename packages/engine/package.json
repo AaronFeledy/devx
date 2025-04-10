@@ -5,22 +5,16 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "build:ts": "tsc --build",
-    "clean": "rm -rf dist",
-    "lint": "eslint src/**/*.ts",
-    "format": "prettier --write src/**/*.ts"
+    "build": "tsc --build",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@devx/common": "workspace:*",
     "@devx/stack": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^20.11.19",
-    "eslint": "^8.56.0",
-    "prettier": "^3.2.5",
-    "typescript": "^5.8.3",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0"
+    "@types/node": "^20.12.7",
+    "typescript": "^5.8.3"
   },
   "publishConfig": {
     "access": "public"

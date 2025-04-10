@@ -1,28 +1,20 @@
-import { loadStackConfig, parseStackConfigFile } from '@devx/stack';
-import type { StackConfig } from '@devx/stack';
+import { loadStackConfig } from '@devx/stack';
+import type { StackConfig } from '@devx/common/schemas/stack';
 import { builderManager } from '@devx/builder';
-import { engineManager, StackStatus } from '@devx/engine';
-import { getGlobalConfig } from './config';
+import type { BuilderPlugin } from '@devx/common';
+import { engineManager } from '@devx/engine';
+import type { EnginePlugin } from '@devx/common';
+import { getGlobalConfig } from './config/index.js';
 import {
   getStackState,
   updateStackState,
   removeStackState,
   getInitialStackState,
   StackBuildStatus,
-} from './state';
-import { resolve } from 'path';
-import { homedir } from 'os';
-import { join } from 'path';
-
-/**
- * Error class for DevX core operations.
- */
-export class DevxCoreError extends Error {
-  constructor(message: string, public cause?: unknown) {
-    super(message);
-    this.name = 'DevxCoreError';
-  }
-}
+  type StackState,
+} from './state/index.js';
+import { resolve, dirname } from 'path';
+import { logger, StackStatus, type StackStatusInfo } from '@devx/common';
 
 /**
  * Finds and loads the stack configuration for a given name or path.
@@ -30,31 +22,37 @@ export class DevxCoreError extends Error {
  *
  * @param stackIdentifier - The name of the stack or path to its config file.
  * @returns A tuple containing the loaded StackConfig and its absolute config path.
- * @throws {DevxCoreError} If the stack config cannot be found or parsed.
+ * @throws {Error} If the stack config cannot be found or parsed.
  */
 async function loadStack(
   stackIdentifier: string
 ): Promise<[StackConfig, string]> {
   try {
-    const stackConfig = await loadStackConfig(stackIdentifier);
-    if (!stackConfig.configPath) {
-        throw new Error(`Stack configuration loaded for '${stackIdentifier}' but is missing its configPath property.`);
+    const result = await loadStackConfig(stackIdentifier);
+    if (!result) {
+      throw new Error(
+        `Stack configuration not found for '${stackIdentifier}'.`
+      );
     }
-    const absoluteConfigPath = stackConfig.configPath;
+    const { stackConfig, configPath } = result;
 
-    // Initialize state if it doesn't exist
-    let state = await getStackState(stackConfig.name);
+    const state = await getStackState(stackConfig.name);
     if (!state) {
-      console.debug(`Initializing state for new stack: ${stackConfig.name}`);
-      state = getInitialStackState(stackConfig, absoluteConfigPath);
-      await updateStackState(stackConfig.name, state); // Save initial state
+      logger.debug(`Initializing state for new stack: ${stackConfig.name}`);
+      const initialState = getInitialStackState(stackConfig, configPath);
+      await updateStackState(stackConfig.name, initialState as any);
     }
 
-    return [stackConfig, absoluteConfigPath];
+    return [stackConfig, configPath];
   } catch (error) {
-    throw new DevxCoreError(
-      `Failed to load stack configuration for '${stackIdentifier}'`,
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error(
+      `Failed to load stack configuration for '${stackIdentifier}': ${errorMessage}`,
       error
+    );
+    throw new Error(
+      `Failed to load stack configuration for '${stackIdentifier}'.`,
+      { cause: error }
     );
   }
 }
@@ -64,22 +62,29 @@ async function loadStack(
  *
  * @param stackConfig - The loaded stack configuration.
  * @returns The appropriate BuilderPlugin instance.
- * @throws {DevxCoreError} If the specified or default builder plugin is not found.
+ * @throws {Error} If the specified or default builder plugin is not found.
  */
-async function getBuilder(stackConfig: StackConfig) {
+async function getBuilder(stackConfig: StackConfig): Promise<BuilderPlugin> {
   const globalConfig = await getGlobalConfig();
   const builderName = stackConfig.builder?.name ?? globalConfig.defaultBuilder;
   if (!builderName) {
-    throw new DevxCoreError(
+    throw new Error(
       `No builder specified for stack '${stackConfig.name}' and no default builder configured.`
     );
   }
   try {
+    if (!builderManager || typeof builderManager.getPlugin !== 'function') {
+      throw new Error('builderManager is not correctly setup or implemented.');
+    }
     return builderManager.getPlugin(builderName);
   } catch (error) {
-    throw new DevxCoreError(
+    logger.error(
       `Failed to get builder plugin '${builderName}' for stack '${stackConfig.name}'`,
       error
+    );
+    throw new Error(
+      `Failed to get builder plugin '${builderName}' for stack '${stackConfig.name}'`,
+      { cause: error }
     );
   }
 }
@@ -89,22 +94,26 @@ async function getBuilder(stackConfig: StackConfig) {
  *
  * @param stackConfig - The loaded stack configuration.
  * @returns The appropriate EnginePlugin instance.
- * @throws {DevxCoreError} If the specified or default engine plugin is not found.
+ * @throws {Error} If the specified or default engine plugin is not found.
  */
-async function getEngine(stackConfig: StackConfig) {
+async function getEngine(stackConfig: StackConfig): Promise<EnginePlugin> {
   const globalConfig = await getGlobalConfig();
   const engineName = stackConfig.engine?.name ?? globalConfig.defaultEngine;
   if (!engineName) {
-    throw new DevxCoreError(
+    throw new Error(
       `No engine specified for stack '${stackConfig.name}' and no default engine configured.`
     );
   }
   try {
     return engineManager.getPlugin(engineName);
   } catch (error) {
-    throw new DevxCoreError(
+    logger.error(
       `Failed to get engine plugin '${engineName}' for stack '${stackConfig.name}'`,
       error
+    );
+    throw new Error(
+      `Failed to get engine plugin '${engineName}' for stack '${stackConfig.name}'`,
+      { cause: error }
     );
   }
 }
@@ -113,244 +122,213 @@ async function getEngine(stackConfig: StackConfig) {
  * Builds the specified stack using the configured builder plugin.
  *
  * @param stackIdentifier - The name of the stack or path to its config file.
- * @throws {DevxCoreError} If the build process fails.
+ * @throws {Error} If the build process fails.
  */
 export async function build(stackIdentifier: string): Promise<void> {
-  const [stackConfig] = await loadStack(stackIdentifier);
+  const [stackConfig, configPath] = await loadStack(stackIdentifier);
   const builder = await getBuilder(stackConfig);
+  const projectPath = dirname(configPath);
 
-  console.log(`Building stack '${stackConfig.name}' using builder '${builder.name}'...`);
+  logger.info(
+    `Building stack '${stackConfig.name}' using builder '${builder.name}'...`
+  );
 
   try {
-    // Pass builder-specific options from stack config if they exist
-    const builderOptions = stackConfig.builder?.options ?? {};
-    const buildResult = await builder.build(stackConfig, builderOptions);
+    await builder.build(stackConfig, projectPath);
 
-    // Update state with build success and manifest path
     await updateStackState(stackConfig.name, {
       buildStatus: StackBuildStatus.Built,
       lastBuiltAt: new Date(),
-      manifestPath: buildResult?.manifestPath, // Store path from builder result
-      lastError: null, // Clear previous errors
+      lastError: null,
     });
 
-    console.log(`Stack '${stackConfig.name}' built successfully.`);
-    if (buildResult?.manifestPath) {
-        console.log(`Manifest generated at: ${buildResult.manifestPath}`);
-    }
+    logger.info(`Stack '${stackConfig.name}' built successfully.`);
   } catch (error) {
-    // Update state with build failure
     await updateStackState(stackConfig.name, {
-      buildStatus: StackBuildStatus.BuildFailed,
+      buildStatus: StackBuildStatus.Error,
       lastError: error instanceof Error ? error.message : String(error),
     });
-    throw new DevxCoreError(
-      `Failed to build stack '${stackConfig.name}'`,
-      error
-    );
+    logger.error(`Failed to build stack '${stackConfig.name}'`, error);
+    throw new Error(`Failed to build stack '${stackConfig.name}'`, {
+      cause: error,
+    });
   }
 }
 
 /**
- * Starts the specified stack using the configured engine plugin.
- * If the stack is not built, it attempts to build it first.
+ * Starts the specified stack using the configured builder plugin.
+ * Ensures the stack is built first.
  *
  * @param stackIdentifier - The name of the stack or path to its config file.
- * @throws {DevxCoreError} If the start process fails.
+ * @throws {Error} If the start process fails.
  */
 export async function start(stackIdentifier: string): Promise<void> {
-  const [stackConfig] = await loadStack(stackIdentifier);
-  const engine = await getEngine(stackConfig);
+  const [stackConfig, configPath] = await loadStack(stackIdentifier);
+  const builder = await getBuilder(stackConfig);
+  const projectPath = dirname(configPath);
   let state = await getStackState(stackConfig.name);
 
-  // Check if built, build if necessary
   if (!state || state.buildStatus !== StackBuildStatus.Built) {
-    console.warn(
+    logger.warn(
       `Stack '${stackConfig.name}' is not built or build status is unknown. Attempting to build first...`
     );
     try {
-      await build(stackIdentifier); // Use the identifier to rebuild
-      state = await getStackState(stackConfig.name); // Re-fetch state after build
+      await build(stackIdentifier);
+      state = await getStackState(stackConfig.name);
       if (!state || state.buildStatus !== StackBuildStatus.Built) {
         throw new Error('Build completed but state indicates failure.');
       }
-    } catch (error) {
-      throw new DevxCoreError(
-        `Build failed for stack '${stackConfig.name}', cannot start.`, error);
+    } catch (buildError) {
+      logger.error(
+        `Build failed for stack '${stackConfig.name}', cannot start.`,
+        buildError
+      );
+      throw new Error(
+        `Build failed for stack '${stackConfig.name}', cannot start.`,
+        { cause: buildError }
+      );
     }
   }
 
-  // Refinement: The engine might need the manifest path. We assume the engine
-  // plugin knows how to find it based on convention or state for now.
-  // We added manifestPath to StackState, the engine could potentially retrieve it.
-  // Alternatively, we could pass it explicitly if required by the EnginePlugin interface.
-
-  console.log(`Starting stack '${stackConfig.name}' using engine '${engine.name}'...`);
+  logger.info(
+    `Starting stack '${stackConfig.name}' using builder '${builder.name}'...`
+  );
 
   try {
-    await engine.start(stackConfig);
+    await builder.start(stackConfig, projectPath);
 
-    // Update state with runtime status
     await updateStackState(stackConfig.name, {
-      runtimeStatus: StackStatus.Running, // Assume Running, status check might refine this
+      runtimeStatus: StackStatus.Running,
       lastStartedAt: new Date(),
       lastError: null,
     });
 
-    console.log(`Stack '${stackConfig.name}' started successfully.`);
-  } catch (error) {
-    // Update state with runtime error
+    logger.info(`Stack '${stackConfig.name}' started successfully.`);
+  } catch (error: any) {
+    logger.error(`Failed to start stack '${stackConfig.name}'`, error);
     await updateStackState(stackConfig.name, {
       runtimeStatus: StackStatus.Error,
-      lastError: error instanceof Error ? error.message : String(error),
+      lastError: error.message || 'Unknown error during start',
     });
-    throw new DevxCoreError(
-      `Failed to start stack '${stackConfig.name}'`,
-      error
-    );
+    throw new Error(`Failed to start stack '${stackConfig.name}'`, {
+      cause: error,
+    });
   }
 }
 
 /**
- * Stops the specified stack using the configured engine plugin.
+ * Stops the specified stack using the configured builder plugin.
  *
  * @param stackIdentifier - The name of the stack or path to its config file.
- * @throws {DevxCoreError} If the stop process fails.
+ * @throws {Error} If the stop process fails.
  */
 export async function stop(stackIdentifier: string): Promise<void> {
-  const [stackConfig] = await loadStack(stackIdentifier);
-  const engine = await getEngine(stackConfig);
+  const [stackConfig, configPath] = await loadStack(stackIdentifier);
+  const builder = await getBuilder(stackConfig);
+  const projectPath = dirname(configPath);
 
-  console.log(`Stopping stack '${stackConfig.name}' using engine '${engine.name}'...`);
-
-  try {
-    await engine.stop(stackConfig);
-
-    // Update state with runtime status
-    await updateStackState(stackConfig.name, {
-      runtimeStatus: StackStatus.Stopped,
-      lastStartedAt: null, // Clear start time
-      lastError: null,
-    });
-
-    console.log(`Stack '${stackConfig.name}' stopped successfully.`);
-  } catch (error) {
-     // Even if stop fails, update state to Unknown as we can't be sure
-    await updateStackState(stackConfig.name, {
-      runtimeStatus: StackStatus.Unknown,
-      lastError: error instanceof Error ? error.message : String(error),
-    });
-    throw new DevxCoreError(
-      `Failed to stop stack '${stackConfig.name}'`,
-      error
-    );
-  }
-}
-
-/**
- * Destroys the specified stack using the configured engine plugin.
- * Also removes the stack's state from the state file.
- *
- * @param stackIdentifier - The name of the stack or path to its config file.
- * @throws {DevxCoreError} If the destroy process fails.
- */
-export async function destroy(stackIdentifier: string): Promise<void> {
-  const [stackConfig] = await loadStack(stackIdentifier);
-  const engine = await getEngine(stackConfig);
-
-  console.log(
-    `Destroying stack '${stackConfig.name}' using engine '${engine.name}'...`
+  logger.info(
+    `Stopping stack '${stackConfig.name}' using builder '${builder.name}'...`
   );
 
   try {
-    await engine.destroy(stackConfig);
-    console.log(`Stack '${stackConfig.name}' resources destroyed successfully.`);
+    await builder.stop(stackConfig, projectPath);
 
-    // Remove state after successful destruction
-    await removeStackState(stackConfig.name);
-    console.log(`Removed state information for stack '${stackConfig.name}'.`);
+    await updateStackState(stackConfig.name, {
+      runtimeStatus: StackStatus.Stopped,
+      lastStartedAt: null,
+      lastError: null,
+    });
 
-     // TODO: Optionally remove builder artifacts (e.g., generated manifest)
-     const state = await getStackState(stackConfig.name); // Get state before removing
-     if (state?.manifestPath) {
-         try {
-             const manifestFile = Bun.file(state.manifestPath);
-             if (await manifestFile.exists()) {
-                 // Use rm command or Bun fs utilities when stable
-                 await Bun.spawn(['rm', state.manifestPath]).exited;
-                 console.log(`Removed generated manifest: ${state.manifestPath}`);
-             }
-         } catch (rmError) {
-             console.warn(`Failed to remove manifest file ${state.manifestPath}:`, rmError);
-         }
-     }
-
-  } catch (error) {
-     // Don't remove state if destroy fails, but update status to Error
-     try {
-         await updateStackState(stackConfig.name, {
-             runtimeStatus: StackStatus.Error,
-             lastError: `Destroy failed: ${error instanceof Error ? error.message : String(error)}`,
-         });
-     } catch (stateError) {
-         console.error(`Failed to update state after destroy error for stack '${stackConfig.name}':`, stateError);
-     }
-    throw new DevxCoreError(
-      `Failed to destroy stack '${stackConfig.name}'`,
-      error
-    );
+    logger.info(`Stack '${stackConfig.name}' stopped successfully.`);
+  } catch (error: any) {
+    logger.error(`Failed to stop stack '${stackConfig.name}'`, error);
+    await updateStackState(stackConfig.name, {
+      lastError: error.message || 'Unknown error during stop',
+    });
+    throw new Error(`Failed to stop stack '${stackConfig.name}'`, {
+      cause: error,
+    });
   }
 }
 
 /**
- * Gets the current status of the specified stack from the engine.
+ * Destroys the specified stack using the configured builder plugin.
+ * Also removes the stack's state from the state file.
  *
  * @param stackIdentifier - The name of the stack or path to its config file.
- * @returns The current StackStatus.
- * @throws {DevxCoreError} If checking status fails.
+ * @param options - Options for destruction, e.g., removing volumes.
+ * @throws {Error} If the destroy process fails.
  */
-export async function status(stackIdentifier: string): Promise<StackStatus> {
-    const [stackConfig] = await loadStack(stackIdentifier);
-    const engine = await getEngine(stackConfig);
-    const state = await getStackState(stackConfig.name);
+export async function destroy(
+  stackIdentifier: string,
+  options?: { removeVolumes?: boolean }
+): Promise<void> {
+  const [stackConfig, configPath] = await loadStack(stackIdentifier);
+  const builder = await getBuilder(stackConfig);
+  const projectPath = dirname(configPath);
 
-    console.log(`Checking status for stack '${stackConfig.name}' using engine '${engine.name}'...`);
+  logger.info(
+    `Destroying stack '${stackConfig.name}' using builder '${builder.name}'...`
+  );
 
-    // If state says it's definitely not built, we can assume Stopped
-    if (state?.buildStatus === StackBuildStatus.NotBuilt) {
-        console.log(`Stack '${stackConfig.name}' is not built, reporting status as Stopped.`);
-        // Ensure state reflects this if it was Unknown
-        if (state.runtimeStatus !== StackStatus.Stopped) {
-            await updateStackState(stackConfig.name, { runtimeStatus: StackStatus.Stopped });
-        }
-        return StackStatus.Stopped;
-    }
+  try {
+    await builder.destroy(stackConfig, projectPath, options);
+    logger.info(
+      `Stack '${stackConfig.name}' resources destroyed successfully.`
+    );
 
-    try {
-        const currentStatus = await engine.status(stackConfig);
-        console.log(`Reported status for stack '${stackConfig.name}': ${currentStatus}`);
+    await removeStackState(stackConfig.name);
+    logger.info(`Removed state file for stack '${stackConfig.name}'.`);
+  } catch (error: any) {
+    logger.error(`Failed to destroy stack '${stackConfig.name}'`, error);
+    throw new Error(`Failed to destroy stack '${stackConfig.name}'`, {
+      cause: error,
+    });
+  }
+}
 
-        // Update state with the latest known status from the engine
-        await updateStackState(stackConfig.name, {
-            runtimeStatus: currentStatus,
-            // Clear error only if status is not Error
-            lastError: currentStatus === StackStatus.Error ? state?.lastError : null,
-        });
+/**
+ * Gets the status of the specified stack using the configured engine plugin.
+ *
+ * @param stackIdentifier - The name of the stack or path to its config file.
+ * @returns The stack status information.
+ * @throws {Error} If getting the status fails.
+ */
+export async function status(
+  stackIdentifier: string
+): Promise<StackStatusInfo> {
+  const [stackConfig, configPath] = await loadStack(stackIdentifier);
+  const engine = await getEngine(stackConfig);
+  const projectPath = dirname(configPath);
 
-        return currentStatus;
-    } catch (error) {
-        // Update state to reflect uncertainty
-        try {
-            await updateStackState(stackConfig.name, {
-                runtimeStatus: StackStatus.Unknown,
-                lastError: `Status check failed: ${error instanceof Error ? error.message : String(error)}`,
-            });
-        } catch (stateError) {
-            console.error(`Failed to update state after status check error for stack '${stackConfig.name}':`, stateError);
-        }
-        throw new DevxCoreError(
-            `Failed to get status for stack '${stackConfig.name}'`,
-            error
-        );
-    }
-} 
+  logger.debug(
+    `Getting status for stack '${stackConfig.name}' using engine '${engine.name}'...`
+  );
+
+  try {
+    const statusInfo = await engine.getStackStatus(
+      stackConfig.name,
+      projectPath
+    );
+
+    await updateStackState(stackConfig.name, {
+      runtimeStatus: statusInfo.status,
+      lastError:
+        statusInfo.status === StackStatus.Error ? statusInfo.message : null,
+    });
+
+    logger.debug(`Stack '${stackConfig.name}' status: ${statusInfo.status}`);
+    return statusInfo;
+  } catch (error: any) {
+    logger.error(`Failed to get status for stack '${stackConfig.name}'`, error);
+    await updateStackState(stackConfig.name, {
+      runtimeStatus: StackStatus.Error,
+      lastError: error.message || 'Unknown error getting status',
+    });
+    return {
+      status: StackStatus.Error,
+      message: `Failed to get status: ${error.message}`,
+    };
+  }
+}

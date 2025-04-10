@@ -8,15 +8,8 @@
     "resolveJsonModule": true,
     "composite": true
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "test",
-    "bin"
-  ],
+  "include": ["src/**/*.ts", "index.ts"],
+  "exclude": ["node_modules", "dist", "test", "bin"],
   "references": [
     {
       "path": "../common"

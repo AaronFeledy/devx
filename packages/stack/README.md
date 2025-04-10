@@ -33,11 +33,7 @@ Stacks define the services, networks, volumes, and other resources required for 
 ## Usage Example (Internal)
 
 ```typescript
-import {
-  loadStackConfig,
-  listStacks,
-  StackParseError,
-} from '@devx/stack';
+import { loadStackConfig, listStacks, StackParseError } from '@devx/stack';
 
 try {
   // Load stack config from .stack.yml found in current or parent dir
@@ -47,7 +43,6 @@ try {
   // List known stacks
   const stacks = await listStacks();
   console.log('Known stacks:', stacks);
-
 } catch (error) {
   if (error instanceof StackParseError) {
     console.error(`Stack Configuration Error: ${error.message}`);

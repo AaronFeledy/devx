@@ -1,0 +1,30 @@
+{
+  "name": "@devx/plugin-podman-compose",
+  "version": "0.1.0",
+  "description": "DevX Builder plugin for podman-compose",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@devx/common": "workspace:*",
+    "@devx/stack": "workspace:*",
+    "@devx/builder": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.8",
+    "@types/node": "^20.12.7",
+    "typescript": "^5.8.3"
+  },
+  "peerDependencies": {},
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  }
+}

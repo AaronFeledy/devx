@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../lib/base-command';
+import { BaseCommand } from '../lib/base-command.js';
 import { destroy as coreDestroy } from '@devx/devx';
 import prompts from 'prompts';
 
@@ -62,4 +62,4 @@ export default class Destroy extends BaseCommand<typeof Destroy> {
       await this.catch(error as Error);
     }
   }
-} 
+}

@@ -6,13 +6,17 @@
     "composite": true
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "index.ts"
   ],
   "exclude": [
     "dist",
     "node_modules"
   ],
   "references": [
+    {
+      "path": "../common"
+    },
     {
       "path": "../stack"
     }

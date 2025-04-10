@@ -47,7 +47,7 @@ DevX is distributed as a single executable file, making installation straightfor
 
 ### Install DevX
 
-*(Instructions for pre-built binary - TBD)*
+_(Instructions for pre-built binary - TBD)_
 
 1. Download the latest release from the [releases page](https://github.com/AaronFeledy/devx/releases) (Link TBD).
 2. Make the binary executable (on Linux/macOS):
@@ -138,7 +138,7 @@ services:
     # Or use build:
     # build: ./app
     ports:
-      - "8080:80"
+      - '8080:80'
     volumes:
       - ./app:/var/www/html
     environment:
@@ -157,7 +157,6 @@ services:
 # Define named volumes
 volumes:
   db_data: {}
-
 # Define networks (often handled automatically)
 # networks:
 #   frontend:
@@ -192,7 +191,7 @@ The default engine is Podman.
 
 #### Builder Plugins
 
-Builder plugins abstract the container *orchestration* layer. They take the validated `StackConfig` from the `@devx/stack` package and translate it into the format required by a specific orchestrator (like podman-compose, docker-compose, Kubernetes Kompose, etc.). They then invoke the orchestrator's commands (`up`, `down`, `build`). The default builder is `podman-compose`.
+Builder plugins abstract the container _orchestration_ layer. They take the validated `StackConfig` from the `@devx/stack` package and translate it into the format required by a specific orchestrator (like podman-compose, docker-compose, Kubernetes Kompose, etc.). They then invoke the orchestrator's commands (`up`, `down`, `build`). The default builder is `podman-compose`.
 
 #### Recipes
 
@@ -211,6 +210,7 @@ Global stacks, like the Traefik-based router, could be automatically started whe
 We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) (to be created) for guidelines on setting up the development environment, coding standards, and submitting pull requests.
 
 Key Steps:
+
 1. Fork the repository.
 2. Clone your fork.
 3. Run `bun install` in the root directory.

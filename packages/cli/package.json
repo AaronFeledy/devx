@@ -21,6 +21,8 @@
     "/oclif.manifest.json"
   ],
   "dependencies": {
+    "@devx/common": "workspace:*",
+    "@devx/stack": "workspace:*",
     "@devx/devx": "workspace:*",
     "@oclif/core": "^3",
     "@oclif/plugin-help": "^6",
@@ -29,16 +31,11 @@
     "prompts": "^2.4.2"
   },
   "devDependencies": {
-    "@types/node": "^20.11.19",
+    "@types/node": "^20.12.7",
     "@types/nconf": "^0.10.6",
     "@types/prompts": "^2.4.9",
-    "eslint": "^8.56.0",
     "oclif": "^4",
-    "prettier": "^3.2.5",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0"
+    "typescript": "^5.8.3"
   },
   "oclif": {
     "bin": "devx",
@@ -54,14 +51,10 @@
     }
   },
   "scripts": {
-    "build": "bun run clean && tsc && oclif manifest && oclif readme",
-    "build:ts": "tsc --build",
+    "build": "oclif manifest && oclif readme",
     "clean": "rm -rf dist oclif.manifest.json",
-    "lint": "eslint . --ext .ts --config .eslintrc",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "prepack": "bun run build",
     "postpack": "bun run clean",
-    "posttest": "bun run lint",
     "test": "echo NO TESTS"
   },
   "engines": {

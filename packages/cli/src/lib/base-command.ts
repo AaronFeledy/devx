@@ -27,7 +27,9 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
 
   // These will be populated by oclif's parsing lifecycle
   // Use `this.flags` and `this.args` directly in run method
-  protected flags!: Interfaces.InferredFlags<T['flags'] & typeof BaseCommand.baseFlags>;
+  protected flags!: Interfaces.InferredFlags<
+    T['flags'] & typeof BaseCommand.baseFlags
+  >;
   protected args!: Interfaces.InferredArgs<T['args']>;
 
   // Configuration object using nconf
@@ -41,10 +43,10 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
 
     // Parse flags and args using the command's definition
     const { args, flags } = await this.parse({
-        flags: this.ctor.flags, // Use flags defined in the subclass
-        baseFlags: (super.ctor as typeof BaseCommand).baseFlags, // Include base flags
-        args: this.ctor.args, // Use args defined in the subclass
-        strict: this.ctor.strict, // Use strictness defined in subclass
+      flags: this.ctor.flags, // Use flags defined in the subclass
+      baseFlags: (super.ctor as typeof BaseCommand).baseFlags, // Include base flags
+      args: this.ctor.args, // Use args defined in the subclass
+      strict: this.ctor.strict, // Use strictness defined in subclass
     });
     this.flags = flags as typeof this.flags; // Type assertion
     this.args = args as typeof this.args;
@@ -87,11 +89,10 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       this.error(`DevX Error: ${error.message}`, {
         code: error.name,
         exit: 1,
-        suggestions: error.cause
-          ? [`Cause: ${error.cause}`]
-          : undefined,
+        suggestions: error.cause ? [`Cause: ${error.cause}`] : undefined,
       });
-    } else if (error.name === 'ValidationError') { // Assuming nconf throws ValidationError
+    } else if (error.name === 'ValidationError') {
+      // Assuming nconf throws ValidationError
       this.error(`Configuration Error: ${error.message}`, { exit: 1 });
     } else {
       // Use return instead of await for super.catch
@@ -121,31 +122,40 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
     }
 
     // If no argument, search for .stack.yml
-    this.log('No stack specified, searching for .stack.yml in current and parent directories...');
+    this.log(
+      'No stack specified, searching for .stack.yml in current and parent directories...'
+    );
     try {
       // Use loadStackConfig, which finds the file and parses/validates it
       // We only need the path here, but loading confirms its existence and validity
       const config = await loadStackConfig(); // Load from current dir upwards
-      this.log(`Found and loaded stack configuration: ${config.name} (${config.configPath})`);
+      this.log(
+        `Found and loaded stack configuration: ${config.name} (${config.configPath})`
+      );
       // Return the path to the file, as this seems to be the expected identifier format
       if (!config.configPath) {
-          // This case should theoretically not happen if loadStackConfig succeeds without a path identifier
-          throw new Error('Loaded stack configuration is missing its configPath.');
+        // This case should theoretically not happen if loadStackConfig succeeds without a path identifier
+        throw new Error(
+          'Loaded stack configuration is missing its configPath.'
+        );
       }
       return config.configPath;
     } catch (error: any) {
-        // Handle specific errors from loadStackConfig if needed
-        if (error instanceof Error && error.message.includes('not found')) {
-             throw new Error(
-                'No stack specified and no .stack.yml/.yaml/.json found in the current or parent directories.'
-            );
-        } else {
-            // Re-throw other errors (like parsing/validation errors)
-            throw new Error(`Failed to find or load local stack configuration: ${error.message}`, { cause: error });
-        }
+      // Handle specific errors from loadStackConfig if needed
+      if (error instanceof Error && error.message.includes('not found')) {
+        throw new Error(
+          'No stack specified and no .stack.yml/.yaml/.json found in the current or parent directories.'
+        );
+      } else {
+        // Re-throw other errors (like parsing/validation errors)
+        throw new Error(
+          `Failed to find or load local stack configuration: ${error.message}`,
+          { cause: error }
+        );
+      }
     }
   }
 
   // Make run method abstract to force subclasses to implement it
   abstract run(): Promise<void>;
-} 
+}

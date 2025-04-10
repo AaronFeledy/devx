@@ -2,19 +2,30 @@
   "name": "@devx/rest",
   "version": "0.1.0",
   "private": true,
-  "main": "index.ts",
-  "module": "index.ts",
-  "types": "index.ts",
+  "main": "dist/src/index.js",
+  "module": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "scripts": {
-    "start": "bun run index.ts"
+    "build": "tsc --build",
+    "clean": "rm -rf dist",
+    "start": "bun run dist/index.js"
   },
   "dependencies": {
-    "elysia": "^1.2.25",
     "@devx/common": "workspace:*",
-    "@devx/stack": "workspace:*"
+    "@devx/stack": "workspace:*",
+    "@elysiajs/cors": "^1.2.0",
+    "@elysiajs/swagger": "^1.0.0",
+    "@sinclair/typebox": "^0.34.33",
+    "elysia": "^1.2.25"
   },
   "devDependencies": {
     "typescript": "^5.8.3",
     "@types/node": "^20.12.7"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
   }
 }

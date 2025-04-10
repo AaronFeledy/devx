@@ -1,0 +1,29 @@
+{
+  "name": "@devx/plugin-podman",
+  "version": "0.1.0",
+  "description": "DevX Engine plugin for Podman",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@devx/common": "workspace:*",
+    "@devx/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.8",
+    "@types/node": "^20.12.7",
+    "typescript": "^5.8.3"
+  },
+  "peerDependencies": {},
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  }
+}

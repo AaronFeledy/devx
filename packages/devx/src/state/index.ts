@@ -1,8 +1,18 @@
 import { homedir } from 'os';
 import { join } from 'path';
-import type { StackConfig } from '@devx/stack';
-import { StackStatus } from '@devx/engine';
+import type { StackConfig } from '@devx/common';
+import { StackStatus } from '@devx/common';
 import { existsSync, mkdirSync } from 'fs';
+import { StateManager } from './StateManager.js';
+export * from './types.js';
+
+// Import schemas and enums as values, types as types
+import {
+  DevxStateSchema,
+  StackStateSchema,
+  StackBuildStatus,
+} from './types.js';
+import type { DevxState, StackState } from './types.js';
 
 const DEVX_DIR = join(homedir(), '.devx');
 const STATE_FILE_PATH = join(DEVX_DIR, 'state.json');
@@ -40,7 +50,9 @@ export async function loadDevxState(): Promise<DevxState> {
   try {
     const stateFile = Bun.file(STATE_FILE_PATH);
     if (!(await stateFile.exists())) {
-      console.debug(`State file not found at ${STATE_FILE_PATH}. Initializing empty state.`);
+      console.debug(
+        `State file not found at ${STATE_FILE_PATH}. Initializing empty state.`
+      );
       currentState = {};
       return {};
     }
@@ -60,7 +72,7 @@ export async function loadDevxState(): Promise<DevxState> {
     }
 
     console.debug(`Loaded state from ${STATE_FILE_PATH}`);
-     // TODO: Potentially revive Date objects if stored as strings
+    // TODO: Potentially revive Date objects if stored as strings
     currentState = parsedState.data;
     return parsedState.data;
   } catch (error) {
@@ -81,7 +93,7 @@ export async function saveDevxState(state: DevxState): Promise<void> {
   try {
     // Validate before saving (optional)
     const validatedState = DevxStateSchema.parse(state);
-     // TODO: Potentially stringify Date objects before saving
+    // TODO: Potentially stringify Date objects before saving
     const content = JSON.stringify(validatedState, null, 2); // Pretty print
     await Bun.write(STATE_FILE_PATH, content);
     currentState = validatedState; // Update cache
@@ -98,7 +110,9 @@ export async function saveDevxState(state: DevxState): Promise<void> {
  * @param stackName - The name of the stack.
  * @returns The StackState object if found, otherwise undefined.
  */
-export async function getStackState(stackName: string): Promise<StackState | undefined> {
+export async function getStackState(
+  stackName: string
+): Promise<StackState | undefined> {
   const state = await loadDevxState();
   return state[stackName];
 }
@@ -113,13 +127,17 @@ export async function getStackState(stackName: string): Promise<StackState | und
  */
 export async function updateStackState(
   stackName: string,
-  update: Partial<Omit<StackState, 'name' | 'configPath'> & { configPath?: string }>
+  update: Partial<
+    Omit<StackState, 'name' | 'configPath'> & { configPath?: string }
+  >
 ): Promise<void> {
   const state = await loadDevxState();
   const existingState = state[stackName];
 
   if (!existingState && !update.configPath) {
-      throw new Error(`Cannot create new state for stack '${stackName}' without providing 'configPath'.`);
+    throw new Error(
+      `Cannot create new state for stack '${stackName}' without providing 'configPath'.`
+    );
   }
 
   const newState: StackState = StackStateSchema.parse({
@@ -158,18 +176,16 @@ export async function removeStackState(stackName: string): Promise<void> {
  * @param configPath - The absolute path to the configuration file.
  * @returns A new StackState object.
  */
-export function getInitialStackState(stackConfig: StackConfig, configPath: string): StackState {
-     return StackStateSchema.parse({
-         name: stackConfig.name,
-         configPath: configPath,
-         buildStatus: StackBuildStatus.NotBuilt,
-         runtimeStatus: StackStatus.Unknown, // Start as Unknown until checked
-         lastBuiltAt: null,
-         lastStartedAt: null,
-         manifestPath: null,
-         lastError: null,
-     });
+export function getInitialStackState(
+  stackConfig: StackConfig,
+  configPath: string
+): StackState {
+  return StackStateSchema.parse({
+    name: stackConfig.name,
+    configPath: configPath,
+    buildStatus: StackBuildStatus.NotBuilt,
+    runtimeStatus: StackStatus.Unknown,
+    lastStartedAt: null,
+    lastError: null,
+  });
 }
-
-// Re-export types and enums (already includes StackBuildStatus)
-export * from './types'; 

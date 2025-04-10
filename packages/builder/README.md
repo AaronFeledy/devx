@@ -14,23 +14,31 @@ It achieves this through a plugin system:
 
 ## Features
 
--   **Orchestrator Abstraction**: Allows DevX to support different backend orchestrators without changing the core CLI or stack definition logic.
--   **Extensibility**: New orchestrators can be supported by creating a new class that implements the `BuilderPlugin` interface and registering it.
--   **Configuration Generation**: Handles the creation of orchestrator-specific configuration files (e.g., `podman-compose.yaml`) based on the DevX stack definition.
+- **Orchestrator Abstraction**: Allows DevX to support different backend orchestrators without changing the core CLI or stack definition logic.
+- **Extensibility**: New orchestrators can be supported by creating a new class that implements the `BuilderPlugin` interface and registering it.
+- **Configuration Generation**: Handles the creation of orchestrator-specific configuration files (e.g., `podman-compose.yaml`) based on the DevX stack definition.
 
 ## Default Plugin
 
--   **`podman-compose`**: The default builder plugin uses `podman-compose` to manage the stack.
+- **`podman-compose`**: The default builder plugin uses `podman-compose` to manage the stack.
 
 ## Usage (Internal)
 
 This package is primarily intended for internal use by `@devx/devx`.
 
-```typescript
-import { getBuilderPlugin, BuilderPlugin } from '@devx/builder';
-import { StackConfig } from '@devx/stack'; // Assuming you have a parsed stack config
+Example Usage
 
-async function manageStack(stackConfig: StackConfig, projectPath: string, action: 'start' | 'stop') {
+```typescript
+import { PodmanComposeBuilder } from '@devx/plugin-podman-compose';
+import type { StackConfig } from '@devx/common';
+import { logger } from '@devx/common';
+import { getBuilderPlugin, BuilderPlugin } from '@devx/builder';
+
+async function manageStack(
+  stackConfig: StackConfig,
+  projectPath: string,
+  action: 'start' | 'stop'
+) {
   // Determine the builder name (from config or default)
   const builderName = stackConfig.builder || 'podman-compose';
 
@@ -44,11 +52,15 @@ async function manageStack(stackConfig: StackConfig, projectPath: string, action
     switch (action) {
       case 'start':
         await builder.start(stackConfig, projectPath);
-        console.log(`Stack "${stackConfig.name}" started using ${builder.name}.`);
+        console.log(
+          `Stack "${stackConfig.name}" started using ${builder.name}.`
+        );
         break;
       case 'stop':
         await builder.stop(stackConfig, projectPath);
-        console.log(`Stack "${stackConfig.name}" stopped using ${builder.name}.`);
+        console.log(
+          `Stack "${stackConfig.name}" stopped using ${builder.name}.`
+        );
         break;
       // Add cases for build, destroy, generateConfig etc.
     }
@@ -64,7 +76,7 @@ To add support for a new orchestrator:
 
 1.  Create a new file in `src/plugins/` (e.g., `docker-compose.ts`).
 2.  Implement the `BuilderPlugin` interface from `src/types.ts`.
-    -   Translate the `StackConfig` fields to the target orchestrator's format in `generateConfig`.
-    -   Implement the `build`, `start`, `stop`, and `destroy` methods using the orchestrator's CLI commands or API (potentially using a shared `runCommand` utility).
+    - Translate the `StackConfig` fields to the target orchestrator's format in `generateConfig`.
+    - Implement the `build`, `start`, `stop`, and `destroy` methods using the orchestrator's CLI commands or API (potentially using a shared `runCommand` utility).
 3.  Register an instance of your new plugin in `src/index.ts`.
 4.  Add tests for your plugin.

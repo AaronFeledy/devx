@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../lib/base-command';
+import { BaseCommand } from '../lib/base-command.js';
 import { start as coreStart } from '@devx/devx';
 
 /**
@@ -45,4 +45,4 @@ export default class Start extends BaseCommand<typeof Start> {
       await this.catch(error as Error);
     }
   }
-} 
+}

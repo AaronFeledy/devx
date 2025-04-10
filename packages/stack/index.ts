@@ -1,5 +1,5 @@
-console.log("Hello via Bun!");
+console.log('Hello via Bun!');
 
 export * from './src/schema';
+export { loadStackConfig } from './src/manager';
 export * from './src/parser';
-export * from './src/manager';

@@ -28,7 +28,10 @@ export async function runCommand(
   options?: { cwd?: string }
 ): Promise<string> {
   const command = [cmd, ...args];
-  console.debug(`Executing: ${command.join(' ')}` + (options?.cwd ? ` in ${options.cwd}` : ' '));
+  console.debug(
+    `Executing: ${command.join(' ')}` +
+      (options?.cwd ? ` in ${options.cwd}` : ' ')
+  );
 
   const proc = Bun.spawn(command, {
     cwd: options?.cwd,
@@ -47,4 +50,4 @@ export async function runCommand(
   }
 
   return stdout.trim();
-} 
+}
