@@ -1,7 +1,7 @@
 {
-  "name": "@devx/plugin-router",
+  "name": "@devx/global-stacks",
   "version": "0.1.0",
-  "description": "Traefik-based router plugin for DevX",
+  "description": "Global stack management for DevX",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

@@ -13,8 +13,6 @@ export interface StackInfo {
   // Add more details later (config path, services, etc.)
 }
 
-
-
 // --- Placeholder Data --- (Replace with actual logic)
 const managedStacks: Map<StackId, StackInfo> = new Map([
   ['1', { id: '1', name: 'my-web-app', status: 'running' }],

@@ -1,0 +1,29 @@
+name: router
+enabled: true
+priority: 1000
+config:
+  name: devx-router
+  services:
+    traefik:
+      image: traefik:v3.0
+      command:
+        - --api.insecure=true
+        - --providers.docker=true
+        - --providers.docker.exposedbydefault=false
+        - --entrypoints.web.address=:80
+        - --entrypoints.websecure.address=:443
+        - --entrypoints.websecure.http.tls=true
+      ports:
+        - '80:80'
+        - '443:443'
+        - '8080:8080'
+      volumes:
+        - /var/run/podman/podman.sock:/var/run/docker.sock:ro
+      labels:
+        traefik.enable: 'true'
+        traefik.http.routers.dashboard.rule: Host(`traefik.devx.local`)
+        traefik.http.routers.dashboard.service: api@internal
+  networks:
+    devx:
+      name: devx
+      external: true

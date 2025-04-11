@@ -10,14 +10,8 @@
     "esModuleInterop": true,
     "composite": true
   },
-  "include": [
-    "src/**/*.ts",
-    "index.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ],
+  "include": ["src/**/*.ts", "index.ts"],
+  "exclude": ["node_modules", "dist"],
   "references": [
     {
       "path": "../common"
