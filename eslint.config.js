@@ -1,7 +1,7 @@
-const globals = require('globals');
-const tseslint = require('typescript-eslint');
+import globals from 'globals';
+import * as tseslint from 'typescript-eslint';
 
-module.exports = tseslint.config(
+export default tseslint.config(
   {
     // Configures files to be linted
     files: ['**/*.ts'], // Adjust glob patterns if necessary for your project structure
@@ -10,7 +10,7 @@ module.exports = tseslint.config(
       parserOptions: {
         // Use projectService for better monorepo/project reference support
         projectService: true,
-        tsconfigRootDir: __dirname, // Explicitly set root directory
+        tsconfigRootDir: import.meta.dirname, // Explicitly set root directory
       },
       globals: {
         ...globals.node, // Adds Node.js global variables

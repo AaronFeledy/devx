@@ -1,0 +1,32 @@
+{
+    "name": "@devx/recipes",
+    "version": "0.1.0",
+    "description": "Recipe system for DevX stack templates",
+    "type": "module",
+    "main": "dist/index.js",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "lint": "eslint src/**/*.ts",
+        "test": "bun test"
+    },
+    "dependencies": {
+        "@devx/stack": "workspace:*",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.19",
+        "typescript": "^5.3.3",
+        "eslint": "^8.56.0",
+        "@typescript-eslint/parser": "^7.0.1",
+        "@typescript-eslint/eslint-plugin": "^7.0.1"
+    }
+}

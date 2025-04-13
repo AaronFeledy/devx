@@ -2,6 +2,7 @@
   "name": "devx",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "devDependencies": {
     "@types/bun": "^1.2.8",
     "@types/node": "^20.12.7",
@@ -20,14 +21,15 @@
     "packages/devx",
     "packages/rest",
     "packages/common",
+    "packages/recipes",
     "plugins/podman",
     "plugins/podman-compose",
     "plugins/router"
   ],
   "scripts": {
-    "build": "bun build ./packages/common/src/index.ts --outdir ./packages/common/dist --target bun && bun build ./packages/stack/src/index.ts --outdir ./packages/stack/dist --target bun && bun build ./packages/engine/src/index.ts --outdir ./packages/engine/dist --target bun && bun build ./packages/builder/src/index.ts --outdir ./packages/builder/dist --target bun && bun build ./packages/devx/src/index.ts --outdir ./packages/devx/dist --target bun && bun run build:plugins && bun run build:cli && bun build ./packages/rest/src/index.ts --outdir ./packages/rest/dist --target bun",
-    "build:plugins": "bun build ./plugins/podman/src/index.ts --outdir ./plugins/podman/dist --target bun && bun build ./plugins/podman-compose/src/index.ts --outdir ./plugins/podman-compose/dist --target bun && bun build ./plugins/router/src/index.ts --outdir ./plugins/router/dist --target bun",
-    "build:cli": "bun build ./packages/cli/src/index.ts --outdir ./packages/cli/dist --target bun && cd packages/cli && oclif manifest && oclif readme && cd ../..",
+    "build": "bun build ./packages/common/src/index.ts --outdir ./packages/common/dist --target node --format esm && bun build ./packages/stack/src/index.ts --outdir ./packages/stack/dist --target node --format esm && bun build ./packages/engine/src/index.ts --outdir ./packages/engine/dist --target node --format esm && bun build ./packages/builder/src/index.ts --outdir ./packages/builder/dist --target node --format esm && bun build ./packages/devx/src/index.ts --outdir ./packages/devx/dist --target node --format esm && bun build ./packages/tasks/src/index.ts --outdir ./packages/tasks/dist --target node --format esm && bun build ./packages/recipes/src/index.ts --outdir ./packages/recipes/dist --target node --format esm && bun run build:plugins && bun run build:cli && bun build ./packages/rest/src/index.ts --outdir ./packages/rest/dist --target node --format esm",
+    "build:plugins": "bun build ./plugins/podman/src/index.ts --outdir ./plugins/podman/dist --target node --format esm && bun build ./plugins/podman-compose/src/index.ts --outdir ./plugins/podman-compose/dist --target node --format esm && bun build ./plugins/router/src/index.ts --outdir ./plugins/router/dist --target node --format esm",
+    "build:cli": "bun build ./packages/cli/src/index.ts --outdir ./packages/cli/dist --target node --format esm && cd packages/cli && oclif manifest && oclif readme && cd ../..",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
     "clean": "rm -rf dist && rm -rf packages/*/dist && rm -rf packages/*/tsconfig.tsbuildinfo && rm -rf packages/cli/oclif.manifest.json && rm bun.lockb && rm packages/*/bun.lockb"

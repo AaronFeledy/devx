@@ -2,6 +2,7 @@
   "name": "@devx/common",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,8 +18,20 @@
     "@types/node": "^20.12.7"
   },
   "exports": {
-    ".": "./dist/index.js",
-    "./logger": "./dist/logger.js",
-    "./schemas/stack": "./dist/schemas/stack.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./logger": {
+      "types": "./dist/logger.d.ts",
+      "import": "./dist/logger.js",
+      "default": "./dist/logger.js"
+    },
+    "./schemas/stack": {
+      "types": "./dist/schemas/stack.d.ts",
+      "import": "./dist/schemas/stack.js",
+      "default": "./dist/schemas/stack.js"
+    }
   }
 }

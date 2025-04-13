@@ -1,24 +1,24 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "composite": true
-  },
-  "include": ["src/**/*.ts", "index.ts"],
-  "exclude": ["dist", "node_modules"],
-  "references": [
-    {
-      "path": "../common"
-    },
-    {
-      "path": "../stack"
-    },
-    {
-      "path": "../engine"
-    },
-    {
-      "path": "../builder"
+    "composite": true,
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@devx/*": ["../*/src"]
     }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../builder" },
+    { "path": "../engine" },
+    { "path": "../stack" },
+    { "path": "../common" }
   ]
 }
