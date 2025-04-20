@@ -1,29 +1,25 @@
-#!/usr/bin/env -S node --loader ts-node/esm --no-warnings=ExperimentalWarning
+#!/usr/bin/env node --loader ts-node/esm --experimental-specifier-resolution=node
 
 // This script allows running the CLI directly from TypeScript source
 // using ts-node during development.
 
 import oclif from '@oclif/core';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import url from 'node:url';
+import { register } from 'ts-node';
 
-// Get the directory name in an ESM context
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const project = path.join(path.dirname(url.fileURLToPath(import.meta.url)), '..', 'tsconfig.json');
 
-// Set NODE_ENV to development if not already set
-process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+// In dev mode -> use ts-node and dev plugins
+process.env.NODE_ENV = 'development';
 
-// Find the root of the CLI project (packages/cli)
-const projectRoot = path.join(__dirname, '..');
+register({ project });
 
-async function runDev() {
-  try {
-    // Execute oclif's run method, pointing to the project root
-    await oclif.execute({ development: true, dir: projectRoot });
-  } catch (error) {
-    oclif.Errors.handle(error);
-  }
-}
+// In dev mode, always show stack traces
+oclif.settings.debug = true;
 
-runDev();
+// Start the CLI
+oclif
+  .run()
+  .then(oclif.flush)
+  .catch(oclif.Errors.handle);

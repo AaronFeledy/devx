@@ -1,6 +1,8 @@
 import { Recipe, RecipeOption, RecipeManifest, RecipeSchema } from './types';
 import { lampRecipe } from './recipes/lamp';
 
+export type { Recipe, RecipeOption, RecipeManifest };
+
 /**
  * Registry of available recipes
  */

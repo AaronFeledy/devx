@@ -44,7 +44,6 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
     // Parse flags and args using the command's definition
     const { args, flags } = await this.parse({
       flags: this.ctor.flags, // Use flags defined in the subclass
-      baseFlags: (super.ctor as typeof BaseCommand).baseFlags, // Include base flags
       args: this.ctor.args, // Use args defined in the subclass
       strict: this.ctor.strict, // Use strictness defined in subclass
     });
@@ -89,7 +88,7 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       this.error(`DevX Error: ${error.message}`, {
         code: error.name,
         exit: 1,
-        suggestions: error.cause ? [`Cause: ${error.cause}`] : undefined,
+        suggestions: error.cause ? [`Cause: ${error.cause.toString()}`] : undefined,
       });
     } else if (error.name === 'ValidationError') {
       // Assuming nconf throws ValidationError

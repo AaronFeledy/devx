@@ -47,8 +47,6 @@ DevX is distributed as a single executable file, making installation straightfor
 
 ### Install DevX
 
-_(Instructions for pre-built binary - TBD)_
-
 1. Download the latest release from the [releases page](https://github.com/AaronFeledy/devx/releases) (Link TBD).
 2. Make the binary executable (on Linux/macOS):
    ```sh
@@ -62,13 +60,27 @@ _(Instructions for pre-built binary - TBD)_
 ### Build from Source
 
 ```sh
-git clone https://github.com/AaronFeledy/devx.git # Replace with actual URL
+# Clone the repository
+git clone https://github.com/AaronFeledy/devx.git
 cd devx
+
+# Install dependencies
 bun install
-bun run build # Uses tsc --build defined in root package.json
-# The executable will likely be in packages/cli/dist or a top-level dist folder
-# Link or move the final executable (e.g., dist/devx) to your PATH
+
+# Build the project
+bun run build
+
+# The executable is in packages/cli/dist/index.js
+# Make it executable and move it to your PATH
+chmod +x packages/cli/dist/index.js
+mv packages/cli/dist/index.js /usr/local/bin/devx
 ```
+
+The build process:
+1. Compiles TypeScript code
+2. Generates the oclif manifest
+3. Bundles the CLI and all plugins into a single executable
+4. Creates source maps for debugging
 
 ## Usage
 
@@ -169,7 +181,7 @@ Global settings (like the default engine and builder plugins, path to configurat
 
 ## Architecture
 
-DevX utilizes a monorepo structure managed with Bun workspaces.
+DevX utilizes a monorepo structure managed with Bun workspaces. The project is built with TypeScript and uses Bun's bundler to create a single executable that includes all necessary plugins and dependencies.
 
 ### Core Packages
 
@@ -178,7 +190,7 @@ DevX utilizes a monorepo structure managed with Bun workspaces.
 - **`@devx/builder`**: Abstract interface and plugin system for orchestrators (like podman-compose).
 - **`@devx/engine`**: Abstract interface and plugin system for container runtimes (like Podman).
 - **`@devx/rest`**: Provides the REST API daemon.
-- **`@devx/common`**: (Potential) Shared utilities and types.
+- **`@devx/common`**: Shared utilities, types, and plugin management.
 
 ### Plugin System
 

@@ -28,325 +28,148 @@ USAGE
 ## Commands
 
 <!-- commands -->
-* [`devx help [COMMAND]`](#devx-help-command)
-* [`devx plugins`](#devx-plugins)
-* [`devx plugins add PLUGIN`](#devx-plugins-add-plugin)
-* [`devx plugins:inspect PLUGIN...`](#devx-pluginsinspect-plugin)
-* [`devx plugins install PLUGIN`](#devx-plugins-install-plugin)
-* [`devx plugins link PATH`](#devx-plugins-link-path)
-* [`devx plugins remove [PLUGIN]`](#devx-plugins-remove-plugin)
-* [`devx plugins reset`](#devx-plugins-reset)
-* [`devx plugins uninstall [PLUGIN]`](#devx-plugins-uninstall-plugin)
-* [`devx plugins unlink [PLUGIN]`](#devx-plugins-unlink-plugin)
-* [`devx plugins update`](#devx-plugins-update)
+* [`devx build [STACK]`](#devx-build-stack)
+* [`devx destroy [STACK]`](#devx-destroy-stack)
+* [`devx init`](#devx-init)
+* [`devx start [STACK]`](#devx-start-stack)
+* [`devx status [STACKIDENTIFIER]`](#devx-status-stackidentifier)
+* [`devx stop [STACK]`](#devx-stop-stack)
 
-## `devx help [COMMAND]`
+## `devx build [STACK]`
 
-Display help for devx.
+Builds the specified development stack.
 
 ```
 USAGE
-  $ devx help [COMMAND...] [-n]
+  $ devx build [STACK]
 
 ARGUMENTS
-  COMMAND...  Command to show help for.
-
-FLAGS
-  -n, --nested-commands  Include all nested commands in the output.
+  STACK  Name or path of the stack to build. If omitted, searches in current/parent directories.
 
 DESCRIPTION
-  Display help for devx.
-```
-
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.27/src/commands/help.ts)_
-
-## `devx plugins`
-
-List installed plugins.
-
-```
-USAGE
-  $ devx plugins [--json] [--core]
-
-FLAGS
-  --core  Show core plugins.
-
-GLOBAL FLAGS
-  --json  Format output as json.
-
-DESCRIPTION
-  List installed plugins.
+  Builds the specified development stack.
 
 EXAMPLES
-  $ devx plugins
+  $ devx build my-app
+
+  $ devx build ./path/to/my-project/
+
+  $ devx build
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.36/src/commands/plugins/index.ts)_
+## `devx destroy [STACK]`
 
-## `devx plugins add PLUGIN`
-
-Installs a plugin into devx.
+Destroys the specified development stack and associated resources.
 
 ```
 USAGE
-  $ devx plugins add PLUGIN... [--json] [-f] [-h] [-s | -v]
+  $ devx destroy [STACK] [-f]
 
 ARGUMENTS
-  PLUGIN...  Plugin to install.
+  STACK  Name or path of the stack to destroy. If omitted, searches in current/parent directories.
 
 FLAGS
-  -f, --force    Force npm to fetch remote resources even if a local copy exists on disk.
-  -h, --help     Show CLI help.
-  -s, --silent   Silences npm output.
-  -v, --verbose  Show verbose npm output.
-
-GLOBAL FLAGS
-  --json  Format output as json.
+  -f, --force  Force destruction without confirmation
 
 DESCRIPTION
-  Installs a plugin into devx.
-
-  Uses npm to install plugins.
-
-  Installation of a user-installed plugin will override a core plugin.
-
-  Use the DEVX_NPM_LOG_LEVEL environment variable to set the npm loglevel.
-  Use the DEVX_NPM_REGISTRY environment variable to set the npm registry.
-
-ALIASES
-  $ devx plugins add
+  Destroys the specified development stack and associated resources.
 
 EXAMPLES
-  Install a plugin from npm registry.
+  $ devx destroy my-app
 
-    $ devx plugins add myplugin
+  $ devx destroy
 
-  Install a plugin from a github url.
-
-    $ devx plugins add https://github.com/someuser/someplugin
-
-  Install a plugin from a github slug.
-
-    $ devx plugins add someuser/someplugin
+  $ devx destroy my-app --force
 ```
 
-## `devx plugins:inspect PLUGIN...`
+## `devx init`
 
-Displays installation properties of a plugin.
+Initializes a new DevX stack configuration (`.stack.yml`).
 
 ```
 USAGE
-  $ devx plugins inspect PLUGIN...
+  $ devx init [-f] [--name <value>] [--recipe <value>]
+
+FLAGS
+  -f, --force           Overwrite existing .stack.yml file.
+      --name=<value>    Name of the stack (defaults to directory name)
+      --recipe=<value>  Use a predefined recipe (e.g., lamp)
+
+DESCRIPTION
+  Initializes a new DevX stack configuration (`.stack.yml`).
+
+EXAMPLES
+  $ devx init
+
+  $ devx init --name my-project
+
+  $ devx init --recipe lamp
+
+  $ devx init --recipe lamp db=postgres web=nginx
+
+  $ devx init web=nginx:latest db=postgres:15 ports.web=8080:80
+```
+
+## `devx start [STACK]`
+
+Starts the specified development stack.
+
+```
+USAGE
+  $ devx start [STACK]
 
 ARGUMENTS
-  PLUGIN...  [default: .] Plugin to inspect.
-
-FLAGS
-  -h, --help     Show CLI help.
-  -v, --verbose
-
-GLOBAL FLAGS
-  --json  Format output as json.
+  STACK  Name or path of the stack to start. If omitted, searches in current/parent directories.
 
 DESCRIPTION
-  Displays installation properties of a plugin.
+  Starts the specified development stack.
 
 EXAMPLES
-  $ devx plugins inspect myplugin
+  $ devx start my-app
+
+  $ devx start
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.36/src/commands/plugins/inspect.ts)_
+## `devx status [STACKIDENTIFIER]`
 
-## `devx plugins install PLUGIN`
-
-Installs a plugin into devx.
+Gets the current status of a DevX stack.
 
 ```
 USAGE
-  $ devx plugins install PLUGIN... [--json] [-f] [-h] [-s | -v]
+  $ devx status [STACKIDENTIFIER]
 
 ARGUMENTS
-  PLUGIN...  Plugin to install.
-
-FLAGS
-  -f, --force    Force npm to fetch remote resources even if a local copy exists on disk.
-  -h, --help     Show CLI help.
-  -s, --silent   Silences npm output.
-  -v, --verbose  Show verbose npm output.
-
-GLOBAL FLAGS
-  --json  Format output as json.
+  STACKIDENTIFIER  [default: .] Name of the stack or path to its configuration file (defaults to finding .stack.yml in
+                   current or parent dirs)
 
 DESCRIPTION
-  Installs a plugin into devx.
-
-  Uses npm to install plugins.
-
-  Installation of a user-installed plugin will override a core plugin.
-
-  Use the DEVX_NPM_LOG_LEVEL environment variable to set the npm loglevel.
-  Use the DEVX_NPM_REGISTRY environment variable to set the npm registry.
-
-ALIASES
-  $ devx plugins add
+  Gets the current status of a DevX stack.
 
 EXAMPLES
-  Install a plugin from npm registry.
+  $ devx status
 
-    $ devx plugins install myplugin
+  $ devx status my-app
 
-  Install a plugin from a github url.
-
-    $ devx plugins install https://github.com/someuser/someplugin
-
-  Install a plugin from a github slug.
-
-    $ devx plugins install someuser/someplugin
+  $ devx status ./path/to/project
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.36/src/commands/plugins/install.ts)_
+## `devx stop [STACK]`
 
-## `devx plugins link PATH`
-
-Links a plugin into the CLI for development.
+Stops the specified development stack.
 
 ```
 USAGE
-  $ devx plugins link PATH [-h] [--install] [-v]
+  $ devx stop [STACK]
 
 ARGUMENTS
-  PATH  [default: .] path to plugin
-
-FLAGS
-  -h, --help          Show CLI help.
-  -v, --verbose
-      --[no-]install  Install dependencies after linking the plugin.
+  STACK  Name or path of the stack to stop. If omitted, searches in current/parent directories.
 
 DESCRIPTION
-  Links a plugin into the CLI for development.
-
-  Installation of a linked plugin will override a user-installed or core plugin.
-
-  e.g. If you have a user-installed or core plugin that has a 'hello' command, installing a linked plugin with a 'hello'
-  command will override the user-installed or core plugin implementation. This is useful for development work.
-
+  Stops the specified development stack.
 
 EXAMPLES
-  $ devx plugins link myplugin
+  $ devx stop my-app
+
+  $ devx stop
 ```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.36/src/commands/plugins/link.ts)_
-
-## `devx plugins remove [PLUGIN]`
-
-Removes a plugin from the CLI.
-
-```
-USAGE
-  $ devx plugins remove [PLUGIN...] [-h] [-v]
-
-ARGUMENTS
-  PLUGIN...  plugin to uninstall
-
-FLAGS
-  -h, --help     Show CLI help.
-  -v, --verbose
-
-DESCRIPTION
-  Removes a plugin from the CLI.
-
-ALIASES
-  $ devx plugins unlink
-  $ devx plugins remove
-
-EXAMPLES
-  $ devx plugins remove myplugin
-```
-
-## `devx plugins reset`
-
-Remove all user-installed and linked plugins.
-
-```
-USAGE
-  $ devx plugins reset [--hard] [--reinstall]
-
-FLAGS
-  --hard       Delete node_modules and package manager related files in addition to uninstalling plugins.
-  --reinstall  Reinstall all plugins after uninstalling.
-```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.36/src/commands/plugins/reset.ts)_
-
-## `devx plugins uninstall [PLUGIN]`
-
-Removes a plugin from the CLI.
-
-```
-USAGE
-  $ devx plugins uninstall [PLUGIN...] [-h] [-v]
-
-ARGUMENTS
-  PLUGIN...  plugin to uninstall
-
-FLAGS
-  -h, --help     Show CLI help.
-  -v, --verbose
-
-DESCRIPTION
-  Removes a plugin from the CLI.
-
-ALIASES
-  $ devx plugins unlink
-  $ devx plugins remove
-
-EXAMPLES
-  $ devx plugins uninstall myplugin
-```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.36/src/commands/plugins/uninstall.ts)_
-
-## `devx plugins unlink [PLUGIN]`
-
-Removes a plugin from the CLI.
-
-```
-USAGE
-  $ devx plugins unlink [PLUGIN...] [-h] [-v]
-
-ARGUMENTS
-  PLUGIN...  plugin to uninstall
-
-FLAGS
-  -h, --help     Show CLI help.
-  -v, --verbose
-
-DESCRIPTION
-  Removes a plugin from the CLI.
-
-ALIASES
-  $ devx plugins unlink
-  $ devx plugins remove
-
-EXAMPLES
-  $ devx plugins unlink myplugin
-```
-
-## `devx plugins update`
-
-Update installed plugins.
-
-```
-USAGE
-  $ devx plugins update [-h] [-v]
-
-FLAGS
-  -h, --help     Show CLI help.
-  -v, --verbose
-
-DESCRIPTION
-  Update installed plugins.
-```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.36/src/commands/plugins/update.ts)_
 <!-- commandsstop -->

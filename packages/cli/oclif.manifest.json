@@ -1,0 +1,216 @@
+{
+  "commands": {
+    "build": {
+      "aliases": [],
+      "args": {
+        "stack": {
+          "description": "Name or path of the stack to build. If omitted, searches in current/parent directories.",
+          "name": "stack",
+          "required": false
+        }
+      },
+      "description": "Builds the specified development stack.",
+      "examples": [
+        "$ devx build my-app",
+        "$ devx build ./path/to/my-project/",
+        "$ devx build"
+      ],
+      "flags": {},
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "build",
+      "pluginAlias": "@devx/cli",
+      "pluginName": "@devx/cli",
+      "pluginType": "core",
+      "strict": true,
+      "enableJsonFlag": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "build.js"
+      ]
+    },
+    "destroy": {
+      "aliases": [],
+      "args": {
+        "stack": {
+          "description": "Name or path of the stack to destroy. If omitted, searches in current/parent directories.",
+          "name": "stack",
+          "required": false
+        }
+      },
+      "description": "Destroys the specified development stack and associated resources.",
+      "examples": [
+        "$ devx destroy my-app",
+        "$ devx destroy",
+        "$ devx destroy my-app --force"
+      ],
+      "flags": {
+        "force": {
+          "char": "f",
+          "description": "Force destruction without confirmation",
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "destroy",
+      "pluginAlias": "@devx/cli",
+      "pluginName": "@devx/cli",
+      "pluginType": "core",
+      "strict": true,
+      "enableJsonFlag": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "destroy.js"
+      ]
+    },
+    "init": {
+      "aliases": [],
+      "args": {},
+      "description": "Initializes a new DevX stack configuration (`.stack.yml`).",
+      "examples": [
+        "$ devx init",
+        "$ devx init --name my-project",
+        "$ devx init --recipe lamp",
+        "$ devx init --recipe lamp db=postgres web=nginx",
+        "$ devx init web=nginx:latest db=postgres:15 ports.web=8080:80"
+      ],
+      "flags": {
+        "force": {
+          "char": "f",
+          "description": "Overwrite existing .stack.yml file.",
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "name": {
+          "description": "Name of the stack (defaults to directory name)",
+          "name": "name",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "recipe": {
+          "description": "Use a predefined recipe (e.g., lamp)",
+          "name": "recipe",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "init",
+      "pluginAlias": "@devx/cli",
+      "pluginName": "@devx/cli",
+      "pluginType": "core",
+      "strict": false,
+      "enableJsonFlag": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "init.js"
+      ]
+    },
+    "start": {
+      "aliases": [],
+      "args": {
+        "stack": {
+          "description": "Name or path of the stack to start. If omitted, searches in current/parent directories.",
+          "name": "stack",
+          "required": false
+        }
+      },
+      "description": "Starts the specified development stack.",
+      "examples": [
+        "$ devx start my-app",
+        "$ devx start"
+      ],
+      "flags": {},
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "start",
+      "pluginAlias": "@devx/cli",
+      "pluginName": "@devx/cli",
+      "pluginType": "core",
+      "strict": true,
+      "enableJsonFlag": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "start.js"
+      ]
+    },
+    "status": {
+      "aliases": [],
+      "args": {
+        "stackIdentifier": {
+          "default": ".",
+          "description": "Name of the stack or path to its configuration file (defaults to finding .stack.yml in current or parent dirs)",
+          "name": "stackIdentifier",
+          "required": false
+        }
+      },
+      "description": "Gets the current status of a DevX stack.",
+      "examples": [
+        "$ devx status",
+        "$ devx status my-app",
+        "$ devx status ./path/to/project"
+      ],
+      "flags": {},
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "status",
+      "pluginAlias": "@devx/cli",
+      "pluginName": "@devx/cli",
+      "pluginType": "core",
+      "strict": true,
+      "enableJsonFlag": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "status.js"
+      ]
+    },
+    "stop": {
+      "aliases": [],
+      "args": {
+        "stack": {
+          "description": "Name or path of the stack to stop. If omitted, searches in current/parent directories.",
+          "name": "stack",
+          "required": false
+        }
+      },
+      "description": "Stops the specified development stack.",
+      "examples": [
+        "$ devx stop my-app",
+        "$ devx stop"
+      ],
+      "flags": {},
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "stop",
+      "pluginAlias": "@devx/cli",
+      "pluginName": "@devx/cli",
+      "pluginType": "core",
+      "strict": true,
+      "enableJsonFlag": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "stop.js"
+      ]
+    }
+  },
+  "version": "0.1.0"
+}
