@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../lib/base-command.js';
+import { BaseCommand } from '../base-command';
 import prompts, { PromptObject } from 'prompts';
 import { existsSync } from 'fs';
 import { writeFile } from 'fs/promises';
@@ -18,7 +18,7 @@ type GeneratedStackConfig = StackConfig;
  * Oclif command for initializing a new DevX stack configuration (`.stack.yml`).
  * Supports both interactive (TUI) and non-interactive (key=value arguments) modes.
  */
-export default class Init extends BaseCommand<typeof Init> {
+export default class Init extends BaseCommand {
   static description =
     'Initializes a new DevX stack configuration (`.stack.yml`).';
 

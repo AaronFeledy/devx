@@ -1,12 +1,13 @@
-import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../lib/base-command.js';
+import { Args, Command, Flags } from '@oclif/core';
+import { BaseCommand } from '../base-command';
 import { stop as coreStop } from '@devx/devx';
+import { findStack, loadStackConfig } from '@devx/stack';
 
 /**
  * Oclif command to stop a DevX development stack.
  * It parses user arguments/flags and invokes the core stop functionality.
  */
-export default class Stop extends BaseCommand<typeof Stop> {
+export default class Stop extends BaseCommand {
   static description = 'Stops the specified development stack.';
 
   static examples = [

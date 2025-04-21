@@ -1,0 +1,26 @@
+# DevX Development Guidelines
+
+## Build, Lint & Test Commands
+- `bun run build` - Build all packages
+- `bun run build:ts` - TypeScript build
+- `bun run lint` - Run ESLint on all TypeScript files
+- `bun run format` - Format code with Prettier
+
+## Code Style
+- **Formatting**: Uses Prettier with tabWidth: 2, singleQuote: true, semi: true
+- **Linting**: ESLint with recommended rules
+- **TypeScript**: Strict mode enabled with source maps
+- **Imports**: Standard ES modules, sort alphabetically
+- **Naming**: camelCase for variables/functions, PascalCase for classes/interfaces
+- **JSDoc**: Required for functions and classes, particularly public APIs. Be thorough on all code comments.
+- **Error Handling**: Use typed errors like `StackParseError`, propagate with context
+
+## Project Architecture
+- Monorepo structure with workspaces in `packages/`
+- Use Zod for schema validation and type inference
+- Handle errors with specific error classes and detailed messages
+- Avoid any-typing - use unknown for safer type casting
+
+## Agent Guidelines
+- Always check the README files in each package for important information and update them if necessary.
+- Use CLI commands to edit package.json files.

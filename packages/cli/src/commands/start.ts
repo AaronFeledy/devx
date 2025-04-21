@@ -1,13 +1,14 @@
-import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../lib/base-command.js';
+import { Args, Command, Flags } from '@oclif/core';
+import { BaseCommand } from '../base-command';
 import { start as coreStart } from '@devx/devx';
+import { findStack, loadStackConfig } from '@devx/stack';
 
 /**
  * Oclif command to start a DevX development stack.
  * It parses user arguments/flags and invokes the core start functionality.
  */
-export default class Start extends BaseCommand<typeof Start> {
-  static description = 'Starts the specified development stack.';
+export default class Start extends BaseCommand {
+  static description = 'Start a DevX stack.';
 
   static examples = [
     '$ devx start my-app',

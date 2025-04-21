@@ -19,6 +19,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "nconf": "^0.12.0",
     "@devx/stack": "workspace:*",
     "@devx/recipes": "workspace:*",
     "@oclif/core": "^3.0.0",
@@ -33,7 +34,8 @@
     "eslint": "^8.56.0",
     "@typescript-eslint/parser": "^7.0.1",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
-    "@oclif/plugin-legacy": "^2.0.22"
+    "@oclif/plugin-legacy": "^2.0.22",
+    "oclif": "^4.17.44"
   },
   "oclif": {
     "bin": "devx",

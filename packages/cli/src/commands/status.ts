@@ -1,13 +1,14 @@
 import { BaseCommand } from '../lib/base-command.js';
-import { Args } from '@oclif/core';
+import { Args, Command, Flags } from '@oclif/core';
 import { status as coreStatus } from '@devx/devx';
 import { StackStatus, type StackStatusInfo } from '@devx/common';
+import { findStack, loadStackConfig } from '@devx/stack';
 
 /**
  * Oclif command to check the status of a DevX stack.
  */
-export default class Status extends BaseCommand<typeof Status> {
-  static description = 'Gets the current status of a DevX stack.';
+export default class Status extends BaseCommand {
+  static description = 'Get the status of a DevX stack.';
 
   static examples = [
     '$ devx status', // Checks status in current directory

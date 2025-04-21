@@ -1,9 +1,10 @@
-import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../lib/base-command.js';
+import { Args, Command, Flags } from '@oclif/core';
+import { BaseCommand } from '../base-command';
 import { destroy as coreDestroy } from '@devx/devx';
 import prompts from 'prompts';
+import { findStack, loadStackConfig } from '@devx/stack';
 
-export default class Destroy extends BaseCommand<typeof Destroy> {
+export default class Destroy extends BaseCommand {
   static description =
     'Destroys the specified development stack and associated resources.';
 
