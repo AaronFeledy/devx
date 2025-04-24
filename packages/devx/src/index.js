@@ -10,8 +10,8 @@ export * from './state/types.js';
 export * from './state/index.js';
 export var StackBuildStatus;
 (function (StackBuildStatus) {
-    StackBuildStatus["NotBuilt"] = "not_built";
-    StackBuildStatus["Building"] = "building";
-    StackBuildStatus["Built"] = "built";
-    StackBuildStatus["Error"] = "error";
+  StackBuildStatus['NotBuilt'] = 'not_built';
+  StackBuildStatus['Building'] = 'building';
+  StackBuildStatus['Built'] = 'built';
+  StackBuildStatus['Error'] = 'error';
 })(StackBuildStatus || (StackBuildStatus = {}));

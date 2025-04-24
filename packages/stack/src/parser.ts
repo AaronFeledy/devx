@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'fs';
 import * as yaml from 'yaml';
 import { StackConfigSchema, type StackConfig } from '@devx/common';
 import { logger } from '@devx/common';
+import { readFile } from 'fs/promises';
 
 /**
  * Custom error class for stack configuration parsing and validation errors.
@@ -93,3 +94,45 @@ export function loadStackConfig(filePath: string): StackConfig {
 
   return parseStackConfigFile(content, filePath);
 }
+
+/**
+ * Asynchronously loads and validates a stack configuration file from a given path.
+ *
+ * @param filePath - The absolute or relative path to the `.stack.yml` or `.stack.json` file.
+ * @returns A promise that resolves to the validated StackConfig object.
+ * @throws {StackParseError} If the file doesn't exist, cannot be read, or is invalid.
+ */
+export async function parseStackFile(filePath: string): Promise<StackConfig> {
+  try {
+    const content = await readFile(filePath, 'utf-8');
+    return parseStackConfigFile(content, filePath);
+  } catch (error: any) {
+    if (error instanceof StackParseError) {
+      throw error;
+    }
+    if (error.code === 'ENOENT') {
+      throw new StackParseError(
+        `Stack configuration file not found: ${filePath}`
+      );
+    }
+    logger.error(`Failed to read configuration file: ${filePath}`, error);
+    throw new StackParseError(
+      `Failed to read configuration file: ${filePath}`,
+      error
+    );
+  }
+}
+
+// Define the schema for environment variables
+const EnvVarSchema = z.record(z.string());
+
+// Define the schema for service configuration
+const ServiceSchema = z.object({
+  image: z.string(),
+  ports: z.array(z.string()).optional(),
+  volumes: z.array(z.string()).optional(),
+  environment: EnvVarSchema.optional(),
+});
+
+// Define the schema for volume configuration
+const VolumeSchema = z.object({}).passthrough();

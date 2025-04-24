@@ -1,9 +1,9 @@
 import type { StackConfig } from '@devx/common';
 type StackId = string;
 export interface StackInfo {
-    id: StackId;
-    name: string;
-    status: 'running' | 'stopped' | 'starting' | 'stopping' | 'error' | 'unknown';
+  id: StackId;
+  name: string;
+  status: 'running' | 'stopped' | 'starting' | 'stopping' | 'error' | 'unknown';
 }
 /**
  * Lists all managed stacks.
@@ -15,7 +15,9 @@ export declare const listStacks: () => Promise<StackInfo[]>;
  * @param stackId - The ID or name of the stack.
  * @returns A promise resolving to the StackInfo object or null if not found.
  */
-export declare const getStackStatus: (stackId: StackId) => Promise<StackInfo | null>;
+export declare const getStackStatus: (
+  stackId: StackId
+) => Promise<StackInfo | null>;
 /**
  * Initializes or creates a stack based on configuration.
  * This might involve parsing a .stack.yml or taking a config object.

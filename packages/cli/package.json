@@ -1,49 +1,50 @@
 {
   "name": "@devx/cli",
   "version": "0.1.0",
-  "description": "DevX CLI",
+  "private": true,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": {
-    "devx": "./dist/index.js"
-  },
-  "files": [
-    "dist",
-    "oclif.manifest.json",
-    "README.md"
-  ],
   "scripts": {
-    "build": "bun ./scripts/build.ts",
-    "lint": "eslint src/**/*.ts",
-    "test": "bun test"
+    "build": "bun build ./src/index.ts --outdir ./dist --target node --format esm",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "test:watch": "bun test --watch",
+    "lint": "eslint . --fix --ext .ts",
+    "format": "prettier --write ."
   },
   "dependencies": {
-    "nconf": "^0.12.0",
-    "@devx/stack": "workspace:*",
+    "@devx/builder": "workspace:*",
+    "@devx/common": "workspace:*",
+    "@devx/devx": "workspace:*",
+    "@devx/engine": "workspace:*",
     "@devx/recipes": "workspace:*",
-    "@oclif/core": "^3.0.0",
-    "commander": "^11.1.0",
-    "prompts": "^2.4.2",
-    "yaml": "^2.3.4",
-    "zod": "^3.22.4"
+    "@devx/rest": "workspace:*",
+    "@devx/stack": "workspace:*",
+    "@devx/tasks": "workspace:*",
+    "@oclif/core": "^2.8.11",
+    "@oclif/plugin-help": "^6.2.9",
+    "@oclif/plugin-plugins": "^3.1.5",
+    "@oclif/plugin-update": "^3.0.0",
+    "@oclif/plugin-version": "^2.0.0",
+    "@types/nconf": "^0.10.7",
+    "nconf": "^0.13.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.19",
-    "typescript": "^5.3.3",
-    "eslint": "^8.56.0",
-    "@typescript-eslint/parser": "^7.0.1",
-    "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@oclif/plugin-legacy": "^2.0.22",
-    "oclif": "^4.17.44"
+    "@types/node": "^20.12.7",
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
+    "eslint": "^9.24.0",
+    "eslint-plugin-unused-imports": "^4.1.4",
+    "expect": "^29.7.0",
+    "oclif": "^4.17.44",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3"
   },
-  "oclif": {
-    "bin": "devx",
-    "dirname": "devx",
-    "commands": "./dist/commands",
-    "plugins": [
-      "@oclif/plugin-legacy"
-    ],
-    "topicSeparator": " "
-  }
+  "files": [
+    "dist/",
+    "oclif.manifest.json",
+    "README.md"
+  ]
 }

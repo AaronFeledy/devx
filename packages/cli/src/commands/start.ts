@@ -1,23 +1,28 @@
-import { Args, Command, Flags } from '@oclif/core';
+import { Flags, Args } from '@oclif/core';
 import { BaseCommand } from '../base-command';
-import { start as coreStart } from '@devx/devx';
-import { findStack, loadStackConfig } from '@devx/stack';
+import { start } from '@devx/devx';
 
 /**
  * Oclif command to start a DevX development stack.
  * It parses user arguments/flags and invokes the core start functionality.
  */
 export default class Start extends BaseCommand {
-  static description = 'Start a DevX stack.';
+  static description =
+    'Starts the services defined in the stack configuration.';
 
   static examples = [
-    '$ devx start my-app',
-    '$ devx start', // Infer stack
+    '$ devx start',
+    '$ devx start my-stack',
+    '$ devx start --service web --service api', // Start specific services
   ];
 
   static flags = {
-    // Example: Attach to logs flag
-    // attach: Flags.boolean({ char: 'a', description: 'Attach to container logs after starting' }),
+    service: Flags.string({
+      multiple: true,
+      char: 's',
+      description: 'Start specific service(s) only',
+    }),
+    // Add other relevant flags like --recreate, --build etc. if needed
     ...BaseCommand.baseFlags,
   };
 
@@ -25,25 +30,34 @@ export default class Start extends BaseCommand {
     stack: Args.string({
       name: 'stack',
       required: false,
-      description:
-        'Name or path of the stack to start. If omitted, searches in current/parent directories.',
+      description: 'Name or path of the stack. If omitted, searches locally.',
     }),
   };
 
   async run(): Promise<void> {
-    const stackArg = this.args.stack;
+    // Parse args and flags
+    const { args, flags } = await this.parse(Start);
+
+    const stackArg = args.stack;
+
+    // Resolve stack identifier
+    const stackIdentifier = await this.getStackIdentifier(stackArg as string);
+
+    // Prepare options
+    const startOptions = {
+      services: flags.service,
+      // Pass other options like recreate, build based on flags
+    };
 
     try {
-      const stackIdentifier = await this.getStackIdentifier(stackArg);
-      this.log(`Attempting to start stack: ${stackIdentifier}`);
-
-      // Call the core start function
-      await coreStart(stackIdentifier);
-
-      this.log(`Stack start initiated successfully for: ${stackIdentifier}`);
-      // Core function handles build-if-needed logic and logs
+      // Instantiate and run executor
+      await start(stackIdentifier);
+      this.log(`Start initiated for stack: ${stackIdentifier}`);
     } catch (error) {
-      await this.catch(error as Error);
+      this.error(
+        `Start failed: ${error instanceof Error ? error.message : String(error)}`,
+        { exit: 1 }
+      );
     }
   }
 }

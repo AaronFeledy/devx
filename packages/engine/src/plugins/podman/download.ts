@@ -5,7 +5,7 @@ import { pipeline } from 'node:stream/promises';
 import { createGunzip } from 'node:zlib';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
-import fetch from 'node-fetch';
+import fetch, { type Response as NodeFetchResponse } from 'node-fetch';
 import * as tar from 'tar';
 import * as unzipper from 'unzipper';
 
@@ -18,15 +18,19 @@ export interface DownloadOptions {
   destination: string;
 }
 
-export async function downloadAndExtract(options: DownloadOptions): Promise<void> {
+export async function downloadAndExtract(
+  options: DownloadOptions
+): Promise<void> {
   const { version, platform, arch, destination } = options;
   const url = getDownloadUrl(version, platform, arch);
-  
+
   console.log(`Downloading Podman ${version} for ${platform}/${arch}...`);
-  
+
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Failed to download Podman: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Failed to download Podman: ${response.status} ${response.statusText}`
+    );
   }
 
   await mkdir(destination, { recursive: true });
@@ -51,14 +55,29 @@ export async function downloadAndExtract(options: DownloadOptions): Promise<void
     try {
       await execAsync(`rm -rf ${destination}`);
     } catch (cleanupError) {
-      console.error('Failed to clean up after error:', cleanupError);
+      if (cleanupError instanceof Error) {
+        console.error('Failed to clean up after error:', cleanupError.message);
+      } else {
+        console.error('Failed to clean up after error:', cleanupError);
+      }
     }
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(`Download/extraction failed: ${error.message}`);
+    } else {
+      throw new Error(
+        `Download/extraction failed with unknown error: ${error}`
+      );
+    }
   }
 }
 
-function getDownloadUrl(version: string, platform: string, arch: string): string {
-  const baseUrl = 'https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable';
+function getDownloadUrl(
+  version: string,
+  platform: string,
+  _arch: string
+): string {
+  const baseUrl =
+    'https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable';
 
   switch (platform) {
     case 'linux':
@@ -72,10 +91,13 @@ function getDownloadUrl(version: string, platform: string, arch: string): string
   }
 }
 
-async function extractWindowsZip(response: Response, destination: string): Promise<void> {
+async function extractWindowsZip(
+  response: NodeFetchResponse,
+  destination: string
+): Promise<void> {
   const buffer = await response.arrayBuffer();
   const zip = await unzipper.Open.buffer(Buffer.from(buffer));
-  
+
   for (const file of zip.files) {
     if (file.type === 'File') {
       const content = await file.buffer();
@@ -85,64 +107,82 @@ async function extractWindowsZip(response: Response, destination: string): Promi
   }
 }
 
-async function extractMacOSPkg(response: Response, destination: string): Promise<void> {
+async function extractMacOSPkg(
+  response: NodeFetchResponse,
+  destination: string
+): Promise<void> {
   // macOS packages need to be extracted using pkgutil
   const pkgPath = join(destination, 'podman.pkg');
-  await pipeline(
-    response.body!,
-    createWriteStream(pkgPath)
-  );
+  await pipeline(response.body!, createWriteStream(pkgPath));
 
   try {
-    const { stdout: pkgutilStdout, stderr: pkgutilStderr } = await execAsync(`pkgutil --expand-full ${pkgPath} ${join(destination, 'extracted')}`);
+    const { stderr: pkgutilStderr } = await execAsync(
+      `pkgutil --expand-full ${pkgPath} ${join(destination, 'extracted')}`
+    );
     if (pkgutilStderr) {
       throw new Error(`pkgutil failed: ${pkgutilStderr}`);
     }
 
-    const { stdout: cpStdout, stderr: cpStderr } = await execAsync(`cp ${join(destination, 'extracted', 'podman', 'usr', 'local', 'bin', 'podman')} ${destination}`);
+    const { stderr: cpStderr } = await execAsync(
+      `cp ${join(destination, 'extracted', 'podman', 'usr', 'local', 'bin', 'podman')} ${destination}`
+    );
     if (cpStderr) {
       throw new Error(`cp failed: ${cpStderr}`);
     }
   } catch (error) {
-    throw new Error(`Failed to extract macOS package: ${error.message}`);
+    if (error instanceof Error) {
+      throw new Error(`Failed to extract macOS package: ${error.message}`);
+    } else {
+      throw new Error(`Failed to extract macOS package: ${error}`);
+    }
   }
 }
 
-async function extractLinuxDeb(response: Response, destination: string): Promise<void> {
+async function extractLinuxDeb(
+  response: NodeFetchResponse,
+  destination: string
+): Promise<void> {
   const debPath = join(destination, 'podman.deb');
-  await pipeline(
-    response.body!,
-    createWriteStream(debPath)
-  );
+  await pipeline(response.body!, createWriteStream(debPath));
 
   try {
-    const { stdout: arStdout, stderr: arStderr } = await execAsync(`ar x ${debPath}`, { cwd: destination });
+    const { stderr: arStderr } = await execAsync(`ar x ${debPath}`, {
+      cwd: destination,
+    });
     if (arStderr) {
       throw new Error(`ar failed: ${arStderr}`);
     }
-    
+
     // Extract the data.tar.gz
     await pipeline(
       createReadStream(join(destination, 'data.tar.gz')),
       createGunzip(),
       tar.extract({
         cwd: destination,
-        strip: 1
+        strip: 1,
       })
     );
   } catch (error) {
-    throw new Error(`Failed to extract Linux package: ${error.message}`);
+    if (error instanceof Error) {
+      throw new Error(`Failed to extract Linux package: ${error.message}`);
+    } else {
+      throw new Error(`Failed to extract Linux package: ${error}`);
+    }
   }
 }
 
 async function makeExecutable(destination: string): Promise<void> {
   const podmanPath = join(destination, 'podman');
   try {
-    const { stdout, stderr } = await execAsync(`chmod +x ${podmanPath}`);
+    const { stderr } = await execAsync(`chmod +x ${podmanPath}`);
     if (stderr) {
       throw new Error(`chmod failed: ${stderr}`);
     }
   } catch (error) {
-    throw new Error(`Failed to make binary executable: ${error.message}`);
+    if (error instanceof Error) {
+      throw new Error(`Failed to make binary executable: ${error.message}`);
+    } else {
+      throw new Error(`Failed to make binary executable: ${error}`);
+    }
   }
-} 
+}

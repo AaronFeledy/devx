@@ -158,7 +158,7 @@ const podmanEngine: EnginePlugin = {
         logger.warn(
           `${logPrefix} Stack has a mix of running and stopped containers.`
         );
-      } else if (hasStopped && overallStatus !== StackStatus.Error) {
+      } else if (hasStopped) {
         // All containers are stopped/exited (exit 0)
         overallStatus = StackStatus.Stopped;
       }

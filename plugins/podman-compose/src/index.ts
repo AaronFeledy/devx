@@ -35,16 +35,18 @@ async function runPodmanComposeCommand(
   logger.debug(`Attempting to use podman-compose at: ${podmanComposePath}`);
 
   if (!existsSync(podmanComposePath)) {
-      throw new Error(`Bundled podman-compose not found at: ${podmanComposePath}. Please ensure the Podman engine plugin has initialized successfully.`);
+    throw new Error(
+      `Bundled podman-compose not found at: ${podmanComposePath}. Please ensure the Podman engine plugin has initialized successfully.`
+    );
   }
 
   const command = `"${podmanComposePath}" ${args.join(' ')}`;
   logger.debug(`Executing in ${cwd}: ${command}`);
   try {
     const env = {
-        ...process.env,
-        CONTAINERS_STORAGE_CONF: process.env.CONTAINERS_STORAGE_CONF,
-        CONTAINERS_CONTAINERS_CONF: process.env.CONTAINERS_CONTAINERS_CONF,
+      ...process.env,
+      CONTAINERS_STORAGE_CONF: process.env.CONTAINERS_STORAGE_CONF,
+      CONTAINERS_CONTAINERS_CONF: process.env.CONTAINERS_CONTAINERS_CONF,
     };
 
     const { stdout, stderr } = await execAsync(command, { cwd, env });
@@ -77,16 +79,25 @@ const podmanComposeBuilder: BuilderPlugin = {
   async isAvailable(): Promise<boolean> {
     const podmanComposePath = getBundledPodmanComposePath();
     if (!existsSync(podmanComposePath)) {
-      logger.warn(`Bundled podman-compose not found at ${podmanComposePath}. Assuming unavailable.`);
+      logger.warn(
+        `Bundled podman-compose not found at ${podmanComposePath}. Assuming unavailable.`
+      );
       return false;
     }
     try {
-      logger.debug(`Checking availability of bundled podman-compose: ${podmanComposePath}`);
+      logger.debug(
+        `Checking availability of bundled podman-compose: ${podmanComposePath}`
+      );
       await runPodmanComposeCommand(['--version'], process.cwd());
-      logger.info(`Bundled podman-compose found and working at ${podmanComposePath}`);
+      logger.info(
+        `Bundled podman-compose found and working at ${podmanComposePath}`
+      );
       return true;
     } catch (error) {
-      logger.warn(`Bundled podman-compose command check failed at ${podmanComposePath}:`, error);
+      logger.warn(
+        `Bundled podman-compose command check failed at ${podmanComposePath}:`,
+        error
+      );
       return false;
     }
   },
@@ -117,14 +128,17 @@ const podmanComposeBuilder: BuilderPlugin = {
       }
       if (service.ports) serviceDef.ports = service.ports;
       if (service.volumes) {
-          serviceDef.volumes = service.volumes.map((volume: string) => {
-              const parts = volume.split(':');
-              if (parts.length >= 2 && (parts[0].startsWith('./') || parts[0].startsWith('/'))) {
-                  const hostPath = path.resolve(projectPath, parts[0]);
-                  return [hostPath, ...parts.slice(1)].join(':');
-              }
-              return volume;
-          });
+        serviceDef.volumes = service.volumes.map((volume: string) => {
+          const parts = volume.split(':');
+          if (
+            parts.length >= 2 &&
+            (parts[0].startsWith('./') || parts[0].startsWith('/'))
+          ) {
+            const hostPath = path.resolve(projectPath, parts[0]);
+            return [hostPath, ...parts.slice(1)].join(':');
+          }
+          return volume;
+        });
       }
       if (service.environment) serviceDef.environment = service.environment;
       if (service.depends_on) serviceDef.depends_on = service.depends_on;
@@ -164,25 +178,44 @@ const podmanComposeBuilder: BuilderPlugin = {
       logger.info(`Generated podman-compose file: ${composeFilePath}`);
       return composeFilePath;
     } catch (error) {
-      logger.error(`Failed to write podman-compose file to ${composeFilePath}`, error);
-      throw new Error(`Failed to generate config file: ${error instanceof Error ? error.message : error}`);
+      logger.error(
+        `Failed to write podman-compose file to ${composeFilePath}`,
+        error
+      );
+      throw new Error(
+        `Failed to generate config file: ${error instanceof Error ? error.message : error}`
+      );
     }
   },
 
   async build(config: StackConfig, projectPath: string): Promise<void> {
     const composeFile = await this.generateConfig(config, projectPath);
     const args = ['-f', composeFile, '--project-name', config.name, 'build'];
-    logger.info(`[${this.name} - ${config.name}] Building stack via podman-compose...`);
+    logger.info(
+      `[${this.name} - ${config.name}] Building stack via podman-compose...`
+    );
     await runPodmanComposeCommand(args, projectPath);
     logger.info(`[${this.name} - ${config.name}] Stack build completed.`);
   },
 
   async start(config: StackConfig, projectPath: string): Promise<void> {
     const composeFile = await this.generateConfig(config, projectPath);
-    const args = ['-f', composeFile, '--project-name', config.name, 'up', '-d', '--build'];
-    logger.info(`[${this.name} - ${config.name}] Starting stack via podman-compose...`);
+    const args = [
+      '-f',
+      composeFile,
+      '--project-name',
+      config.name,
+      'up',
+      '-d',
+      '--build',
+    ];
+    logger.info(
+      `[${this.name} - ${config.name}] Starting stack via podman-compose...`
+    );
     await runPodmanComposeCommand(args, projectPath);
-    logger.info(`[${this.name} - ${config.name}] Stack start initiated (running detached).`);
+    logger.info(
+      `[${this.name} - ${config.name}] Stack start initiated (running detached).`
+    );
   },
 
   async stop(config: StackConfig, projectPath: string): Promise<void> {
@@ -192,11 +225,15 @@ const podmanComposeBuilder: BuilderPlugin = {
       `podman-compose.${config.name}.yaml`
     );
     if (!existsSync(composeFile)) {
-      logger.warn(`[${this.name} - ${config.name}] Compose file not found (${composeFile}), cannot stop stack.`);
+      logger.warn(
+        `[${this.name} - ${config.name}] Compose file not found (${composeFile}), cannot stop stack.`
+      );
       return;
     }
     const args = ['-f', composeFile, '--project-name', config.name, 'down'];
-    logger.info(`[${this.name} - ${config.name}] Stopping stack via podman-compose...`);
+    logger.info(
+      `[${this.name} - ${config.name}] Stopping stack via podman-compose...`
+    );
     await runPodmanComposeCommand(args, projectPath);
     logger.info(`[${this.name} - ${config.name}] Stack stop completed.`);
   },
@@ -211,16 +248,22 @@ const podmanComposeBuilder: BuilderPlugin = {
       DEVX_PROJECT_DIR,
       `podman-compose.${config.name}.yaml`
     );
-     if (!existsSync(composeFile)) {
-      logger.warn(`[${this.name} - ${config.name}] Compose file not found (${composeFile}), cannot destroy stack components defined in it.`);
-       return;
+    if (!existsSync(composeFile)) {
+      logger.warn(
+        `[${this.name} - ${config.name}] Compose file not found (${composeFile}), cannot destroy stack components defined in it.`
+      );
+      return;
     }
     const args = ['-f', composeFile, '--project-name', config.name, 'down'];
     if (options?.removeVolumes) {
       args.push('--volumes');
-      logger.info(`[${this.name} - ${config.name}] Destroying stack and removing volumes...`);
+      logger.info(
+        `[${this.name} - ${config.name}] Destroying stack and removing volumes...`
+      );
     } else {
-       logger.info(`[${this.name} - ${config.name}] Destroying stack (keeping volumes)...`);
+      logger.info(
+        `[${this.name} - ${config.name}] Destroying stack (keeping volumes)...`
+      );
     }
     await runPodmanComposeCommand(args, projectPath);
     logger.info(`[${this.name} - ${config.name}] Stack destruction completed.`);

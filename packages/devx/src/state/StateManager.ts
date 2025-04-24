@@ -1,4 +1,4 @@
-import { DevxState, StackState } from './types';
+import { DevxState, StackState } from './types.js';
 
 /**
  * Manages the state of DevX stacks and services.
@@ -35,4 +35,4 @@ export class StateManager {
   removeStack(stackName: string): void {
     delete this.state.stacks[stackName];
   }
-} 
+}

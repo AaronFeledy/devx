@@ -1,4 +1,4 @@
-import type { StackConfig } from '../schemas/stack'; // Use local import
+import type { StackConfig } from '../schemas/stack.js'; // Use local import, Added .js
 
 // Define core plugin interfaces
 
@@ -35,6 +35,9 @@ export interface StackStatusInfo {
 export interface EnginePlugin {
   type: 'engine';
   name: string;
+
+  // Add optional initialize method, mirroring Plugin interface
+  initialize?(): Promise<void>;
 
   /** Check if the engine (e.g., podman daemon) is available and responsive. */
   isAvailable(): Promise<boolean>;

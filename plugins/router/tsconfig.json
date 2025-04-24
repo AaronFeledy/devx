@@ -9,10 +9,10 @@
   "exclude": ["node_modules", "dist"],
   "references": [
     {
-      "path": "../common"
+      "path": "../../packages/common"
     },
     {
-      "path": "../stack"
+      "path": "../../packages/stack"
     }
   ]
 }

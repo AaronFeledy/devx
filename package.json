@@ -9,9 +9,14 @@
     "@typescript-eslint/eslint-plugin": "^8.29.1",
     "@typescript-eslint/parser": "^8.29.1",
     "eslint": "^9.24.0",
+    "eslint-plugin-unused-imports": "^4.1.4",
+    "expect": "^29.7.0",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.29.1"
+  },
+  "overrides": {
+    "lru-cache": "^10.4.3"
   },
   "workspaces": [
     "packages/cli",
@@ -28,11 +33,15 @@
     "plugins/router"
   ],
   "scripts": {
-    "build": "bun build ./packages/common/src/index.ts --outdir ./packages/common/dist --target node --format esm && bun build ./packages/stack/src/index.ts --outdir ./packages/stack/dist --target node --format esm && bun build ./packages/engine/src/index.ts --outdir ./packages/engine/dist --target node --format esm && bun build ./packages/builder/src/index.ts --outdir ./packages/builder/dist --target node --format esm && bun build ./packages/devx/src/index.ts --outdir ./packages/devx/dist --target node --format esm && bun build ./packages/tasks/src/index.ts --outdir ./packages/tasks/dist --target node --format esm && bun build ./packages/recipes/src/index.ts --outdir ./packages/recipes/dist --target node --format esm && bun run build:plugins && bun run build:cli && bun build ./packages/rest/src/index.ts --outdir ./packages/rest/dist --target node --format esm",
+    "build": "tsc --build && bun run build:cli && bun run build:oclif",
+    "build:cli": "cd packages/cli && npx oclif manifest && npx oclif readme && bun run build",
     "build:plugins": "bun build ./plugins/podman/src/index.ts --outdir ./plugins/podman/dist --target node --format esm && bun build ./plugins/podman-compose/src/index.ts --outdir ./plugins/podman-compose/dist --target node --format esm && bun build ./plugins/router/src/index.ts --outdir ./plugins/router/dist --target node --format esm",
-    "build:cli": "bun build ./packages/cli/src/index.ts --outdir ./packages/cli/dist --target node --format esm && cd packages/cli && oclif manifest && oclif readme && cd ../..",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint . --ext .ts --fix --cache --max-warnings 0",
     "format": "prettier --write .",
-    "clean": "rm -rf dist && rm -rf packages/*/dist && rm -rf packages/*/tsconfig.tsbuildinfo && rm -rf packages/cli/oclif.manifest.json && rm bun.lockb && rm packages/*/bun.lockb"
+    "clean": "rm -rf packages/*/dist && rm -rf packages/*/tsconfig.tsbuildinfo && rm -rf packages/cli/oclif.manifest.json && rm -f bun.lock && rm -f packages/*/bun.lock && rm -rf tsconfig.tsbuildinfo",
+    "test": "bun run lint && bun test",
+    "test:recipes": "cd packages/recipes && bun install && bun test && cd ../..",
+    "test:coverage": "bun test --coverage",
+    "test:watch": "bun test --watch"
   }
 }

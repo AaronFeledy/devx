@@ -1,11 +1,4 @@
-import { TaskExecutor } from './executor';
-import { Task, TaskStep, TaskResult, Command, Environment } from './types';
+import { TaskExecutor } from './executor.js';
+import { Task, TaskStep, TaskResult, Command, Environment } from './types.js';
 
-export {
-  TaskExecutor,
-  Task,
-  TaskStep,
-  TaskResult,
-  Command,
-  Environment,
-}; 
+export { TaskExecutor, Task, TaskStep, TaskResult, Command, Environment };

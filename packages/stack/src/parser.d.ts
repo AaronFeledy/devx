@@ -3,13 +3,13 @@ import { type StackConfig } from '@devx/common';
  * Custom error class for stack configuration parsing and validation errors.
  */
 export declare class StackParseError extends Error {
-    details?: any;
-    /**
-     * Creates an instance of StackParseError.
-     * @param message - The error message.
-     * @param details - Additional details about the error.
-     */
-    constructor(message: string, details?: any);
+  details?: any;
+  /**
+   * Creates an instance of StackParseError.
+   * @param message - The error message.
+   * @param details - Additional details about the error.
+   */
+  constructor(message: string, details?: any);
 }
 /**
  * Parses the raw content of a stack configuration file (YAML or JSON).
@@ -19,7 +19,10 @@ export declare class StackParseError extends Error {
  * @returns The parsed and validated StackConfig object.
  * @throws {StackParseError} If parsing or validation fails.
  */
-export declare function parseStackConfigFile(content: string, filePath: string): StackConfig;
+export declare function parseStackConfigFile(
+  content: string,
+  filePath: string
+): StackConfig;
 /**
  * Loads and validates a stack configuration file from a given path.
  *

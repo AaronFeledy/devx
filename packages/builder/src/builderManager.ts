@@ -1,4 +1,4 @@
-import type { BuilderPlugin } from '@devx/common'; // Use common type
+import type { BuilderPlugin, Plugin } from '@devx/common';
 import { pluginManager } from '@devx/common';
 import { logger } from '@devx/common';
 
@@ -61,7 +61,9 @@ export class BuilderManager {
    * @returns An array of registered builder plugin names.
    */
   listPlugins(): string[] {
-    return pluginManager.getBuilderPlugins().map((p) => p.builder!.name);
+    return pluginManager
+      .getBuilderPlugins()
+      .map((p: Plugin) => p.builder!.name);
   }
 }
 

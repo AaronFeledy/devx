@@ -1,43 +1,49 @@
-import { BaseCommand } from '../lib/base-command.js';
-import { Args, Command, Flags } from '@oclif/core';
-import { status as coreStatus } from '@devx/devx';
-import { StackStatus, type StackStatusInfo } from '@devx/common';
-import { findStack, loadStackConfig } from '@devx/stack';
+import { Args } from '@oclif/core';
+import { BaseCommand } from '../base-command';
+// import { TaskExecutor } from '@devx/tasks';
+import { status } from '@devx/devx';
+import type { StackStatusInfo } from '@devx/common';
 
 /**
  * Oclif command to check the status of a DevX stack.
  */
 export default class Status extends BaseCommand {
-  static description = 'Get the status of a DevX stack.';
+  static description = 'Displays the status of services within a stack.';
 
-  static examples = [
-    '$ devx status', // Checks status in current directory
-    '$ devx status my-app', // Checks status for named stack 'my-app'
-    '$ devx status ./path/to/project', // Checks status using config path
-  ];
+  static examples = ['$ devx status', '$ devx status my-stack'];
 
-  // Define argument for stack identifier (optional)
+  static flags = {
+    // Potentially add flags like --all to show stopped containers?
+    ...BaseCommand.baseFlags,
+  };
+
   static args = {
-    stackIdentifier: Args.string({
-      name: 'stackIdentifier',
+    stack: Args.string({
+      name: 'stack',
       required: false,
-      description:
-        'Name of the stack or path to its configuration file (defaults to finding .stack.yml in current or parent dirs)',
-      default: '.', // Default to current directory for search
+      description: 'Name or path of the stack. If omitted, searches locally.',
     }),
   };
 
-  public async run(): Promise<void> {
-    const { args } = await this.parse(Status); // Parse args using the command class
-    const stackIdentifier = args.stackIdentifier;
-
-    this.log(`Checking status for stack: ${stackIdentifier}...`);
+  async run(): Promise<void> {
+    const { args } = await this.parse(Status);
+    const stackArg = args.stack;
+    const stackIdentifier = await this.getStackIdentifier(stackArg as string);
 
     try {
-      const statusInfo: StackStatusInfo = await coreStatus(stackIdentifier);
+      this.log(`Checking status for stack: ${stackIdentifier}...`);
 
-      this.log(`Stack Name: ${stackIdentifier}`); // Use identifier for now, could resolve name later
+      // Remove executor usage
+      const statusInfo = await status(stackIdentifier);
+
+      if (!statusInfo) {
+        this.warn(`Could not retrieve status for stack: ${stackIdentifier}`);
+        return;
+      }
+
+      this.log(`Stack Name: ${stackIdentifier}`); // Assuming stack name is identifier for display
       this.log(`Status: ${statusInfo.status}`);
+
       if (statusInfo.message) {
         this.log(`Message: ${statusInfo.message}`);
       }
@@ -45,26 +51,29 @@ export default class Status extends BaseCommand {
       if (statusInfo.services && Object.keys(statusInfo.services).length > 0) {
         this.log('Services:');
         for (const [name, service] of Object.entries(statusInfo.services)) {
+          // Directly use status from StackStatusInfo
           this.log(`  - ${name}: ${service.status}`);
           if (service.ports && service.ports.length > 0) {
             const portDetails = service.ports
-              .map((p) => `${p.hostPort}:${p.containerPort}/${p.protocol}`)
+              .map(
+                (p) => `${p.hostPort}:${p.containerPort}/${p.protocol || 'tcp'}`
+              )
               .join(', ');
             this.log(`    Ports: ${portDetails}`);
           }
         }
       } else if (
-        statusInfo.status !== StackStatus.Stopped &&
-        statusInfo.status !== StackStatus.NotCreated
+        statusInfo.status !== 'unknown' &&
+        statusInfo.status !== 'error' &&
+        statusInfo.status !== 'stopped' && // Don't warn if intentionally stopped
+        statusInfo.status !== 'not_created' // Don't warn if not created yet
       ) {
-        // Only show no services warning if not explicitly stopped/not created
+        // Only warn if status isn't already indicating a problem or known stopped/absent state
         this.warn('No detailed service information available.');
       }
 
-      if (statusInfo.status === StackStatus.Error) {
+      if (statusInfo.status === 'error') {
         this.warn('Stack is in an error state.');
-        // Consider exiting with non-zero code
-        // this.exit(1);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

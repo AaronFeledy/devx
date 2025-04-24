@@ -20,11 +20,17 @@ console.log('DevX CLI Initializing...');
 const enginePlugins = pluginManager.getEnginePlugins();
 const builderPlugins = pluginManager.getBuilderPlugins();
 
-console.log('Registered Engine Plugins:', enginePlugins.map(p => p.name));
-console.log('Registered Builder Plugins:', builderPlugins.map(p => p.name));
+console.log(
+  'Registered Engine Plugins:',
+  enginePlugins.map((p) => p.name)
+);
+console.log(
+  'Registered Builder Plugins:',
+  builderPlugins.map((p) => p.name)
+);
 
 // Run the CLI
-await run().catch(error => {
+await run().catch((error) => {
   console.error(error);
   process.exit(1);
 });

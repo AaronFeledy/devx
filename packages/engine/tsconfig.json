@@ -5,7 +5,7 @@
     "rootDir": "./src",
     "composite": true
   },
-  "include": ["src/**/*.ts", "index.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["dist", "node_modules"],
   "references": [
     {

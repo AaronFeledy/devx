@@ -11,9 +11,8 @@ import {
   removeStackState,
   getInitialStackState,
   StackBuildStatus,
-  type StackState,
 } from './state/index.js';
-import { resolve, dirname } from 'path';
+import { dirname } from 'path';
 import { logger, StackStatus, type StackStatusInfo } from '@devx/common';
 
 /**

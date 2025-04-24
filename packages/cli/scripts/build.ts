@@ -12,7 +12,10 @@ if (tscResult.status !== 0) {
 
 // Generate oclif manifest
 console.log('Generating oclif manifest...');
-const oclifResult = spawnSync('oclif', ['manifest'], { stdio: 'inherit', shell: true });
+const oclifResult = spawnSync('oclif', ['manifest'], {
+  stdio: 'inherit',
+  shell: true,
+});
 if (oclifResult.status !== 0) {
   console.error('oclif manifest generation failed');
   process.exit(1);
@@ -29,15 +32,12 @@ const bunBuildResult = await Bun.build({
   target: 'bun',
   minify: true,
   sourcemap: 'inline',
-  external: [
-    '@oclif/core',
-    '@oclif/plugin-legacy'
-  ],
+  external: ['@oclif/core', '@oclif/plugin-legacy'],
   plugins: [
     {
       name: 'devx-plugins',
       setup(build) {
-        build.onResolve({ filter: /^@devx\/plugin-.*/ }, args => {
+        build.onResolve({ filter: /^@devx\/plugin-.*/ }, (args) => {
           const pluginPath = require.resolve(args.path);
           return {
             path: pluginPath,
@@ -54,4 +54,4 @@ if (!bunBuildResult.success) {
   process.exit(1);
 }
 
-console.log('Build completed successfully!'); 
+console.log('Build completed successfully!');

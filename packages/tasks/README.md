@@ -28,20 +28,26 @@ const task: Task = {
   steps: [
     // Execute a command on the host
     { exec: 'mkdir -p ./data' },
-    
+
     // Execute a command in a container
-    { exec: 'mysql -u root -p"password" -e "CREATE DATABASE myapp"', container: 'mysql' },
-    
+    {
+      exec: 'mysql -u root -p"password" -e "CREATE DATABASE myapp"',
+      container: 'mysql',
+    },
+
     // Execute a function
     async () => {
       console.log('Database setup complete');
-    }
+    },
   ],
   rollback: [
     // Cleanup steps if something fails
     { exec: 'rm -rf ./data' },
-    { exec: 'mysql -u root -p"password" -e "DROP DATABASE myapp"', container: 'mysql' }
-  ]
+    {
+      exec: 'mysql -u root -p"password" -e "DROP DATABASE myapp"',
+      container: 'mysql',
+    },
+  ],
 };
 
 const executor = new TaskExecutor();
@@ -62,7 +68,7 @@ Commands can be executed in different environments:
 const command: Command = {
   exec: 'echo "Hello World"',
   env: 'bash', // or 'powershell'
-  container: 'my-container' // optional
+  container: 'my-container', // optional
 };
 ```
 
@@ -91,4 +97,4 @@ The TaskExecutor automatically handles rollback steps if any step fails:
 
 ## Contributing
 
-See the main DevX repository for contribution guidelines. 
+See the main DevX repository for contribution guidelines.

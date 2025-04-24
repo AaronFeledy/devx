@@ -1,18 +1,8 @@
 // Main DevX package entrypoint
-
-// Core functions
-export { build, start, stop, destroy, status } from './core.js';
-
-// Errors
-export { DevxCoreError } from './errors.js';
-
-// Config related exports
 export * from './config/index.js';
-export type { GlobalConfig } from './config/types.js';
-
-// State related exports
-export * from './state/types.js';
 export * from './state/index.js';
+export * from './errors.js';
+export * from './core.js'; // Export core functions
 
 // Re-export types from dependent packages
 export type { Plugin } from '@devx/common';
@@ -25,3 +15,4 @@ export enum StackBuildStatus {
   Built = 'built',
   Error = 'error',
 }
+

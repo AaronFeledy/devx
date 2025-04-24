@@ -1,15 +1,9 @@
-import { Command, Flags, Args, Interfaces } from '@oclif/core';
+import { Command, Interfaces } from '@oclif/core';
 import { loadStackConfig } from '@devx/stack';
 import { DevxCoreError } from '@devx/devx';
 import nconf from 'nconf';
 import path from 'path';
 import { homedir } from 'os';
-
-// Define the shape of flags and args
-// We define base flags here, subclasses will merge their own
-interface BaseFlags {
-  // verbose?: boolean; // Example
-}
 
 // Define a base interface for args if needed, though usually specific to command
 // interface BaseArgs {}
@@ -88,7 +82,9 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       this.error(`DevX Error: ${error.message}`, {
         code: error.name,
         exit: 1,
-        suggestions: error.cause ? [`Cause: ${error.cause.toString()}`] : undefined,
+        suggestions: error.cause
+          ? [`Cause: ${error.cause.toString()}`]
+          : undefined,
       });
     } else if (error.name === 'ValidationError') {
       // Assuming nconf throws ValidationError

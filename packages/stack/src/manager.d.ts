@@ -19,19 +19,29 @@ import type { StackConfig } from '@devx/common';
  * @returns A promise that resolves with the validated `StackConfig` object.
  * @throws {Error} If the configuration cannot be found or loaded.
  */
-export declare function loadStackConfig(identifier?: string, cwd?: string): Promise<StackConfig>;
+export declare function loadStackConfig(
+  identifier?: string,
+  cwd?: string
+): Promise<StackConfig>;
 /**
  * Represents the metadata stored for a managed stack.
  */
 interface StackMetadata {
-    /** The absolute path to the stack configuration file (`.stack.yml`, etc.). */
-    configPath: string;
-    /** The current operational status of the stack. */
-    status: 'loaded' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error' | 'unknown';
-    /** Timestamp of the last status update. */
-    lastStatusUpdate?: number;
-    /** Optional error message if the status is 'error'. */
-    errorMessage?: string;
+  /** The absolute path to the stack configuration file (`.stack.yml`, etc.). */
+  configPath: string;
+  /** The current operational status of the stack. */
+  status:
+    | 'loaded'
+    | 'starting'
+    | 'running'
+    | 'stopping'
+    | 'stopped'
+    | 'error'
+    | 'unknown';
+  /** Timestamp of the last status update. */
+  lastStatusUpdate?: number;
+  /** Optional error message if the status is 'error'. */
+  errorMessage?: string;
 }
 /**
  * Lists the names of all stacks for which metadata exists.
@@ -49,7 +59,9 @@ export declare function listStacks(): Promise<string[]>;
  * @returns A promise that resolves with the `StackMetadata` object, or null if no metadata exists for that name.
  * @throws {Error} If reading the metadata file fails for reasons other than it not existing.
  */
-export declare function getStackMetadata(stackName: string): Promise<StackMetadata | null>;
+export declare function getStackMetadata(
+  stackName: string
+): Promise<StackMetadata | null>;
 /**
  * Updates the status (and optionally an error message) for a specific stack's metadata.
  *
@@ -61,5 +73,9 @@ export declare function getStackMetadata(stackName: string): Promise<StackMetada
  * @returns A promise that resolves when the metadata is updated.
  * @throws {Error} If metadata for the stack doesn't exist or saving fails.
  */
-export declare function updateStackStatus(stackName: string, status: StackMetadata['status'], errorMessage?: string): Promise<void>;
+export declare function updateStackStatus(
+  stackName: string,
+  status: StackMetadata['status'],
+  errorMessage?: string
+): Promise<void>;
 export {};

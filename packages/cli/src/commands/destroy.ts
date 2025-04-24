@@ -1,25 +1,26 @@
-import { Args, Command, Flags } from '@oclif/core';
+import { Flags, Args } from '@oclif/core';
 import { BaseCommand } from '../base-command';
-import { destroy as coreDestroy } from '@devx/devx';
-import prompts from 'prompts';
-import { findStack, loadStackConfig } from '@devx/stack';
+import { destroy } from '@devx/devx';
 
 export default class Destroy extends BaseCommand {
   static description =
-    'Destroys the specified development stack and associated resources.';
+    'Stops and removes the containers, networks, and optionally volumes for a stack.';
 
   static examples = [
-    '$ devx destroy my-app',
-    '$ devx destroy', // Infer stack
-    '$ devx destroy my-app --force', // Skip confirmation
+    '$ devx destroy',
+    '$ devx destroy my-stack',
+    '$ devx destroy --volumes', // Remove volumes too
   ];
 
   static flags = {
+    volumes: Flags.boolean({
+      char: 'v',
+      description: 'Remove named volumes declared in the stack configuration',
+    }),
     force: Flags.boolean({
       char: 'f',
-      description: 'Force destruction without confirmation',
-      default: false,
-    }),
+      description: 'Force destroy without confirmation',
+    }), // Placeholder if confirmation added
     ...BaseCommand.baseFlags,
   };
 
@@ -27,40 +28,36 @@ export default class Destroy extends BaseCommand {
     stack: Args.string({
       name: 'stack',
       required: false,
-      description:
-        'Name or path of the stack to destroy. If omitted, searches in current/parent directories.',
+      description: 'Name or path of the stack. If omitted, searches locally.',
     }),
   };
 
   async run(): Promise<void> {
-    const stackArg = this.args.stack;
-    const forceFlag = this.flags.force;
+    // Parse arguments and flags
+    const { args, flags } = await this.parse(Destroy);
+
+    const stackArg = args.stack;
+    const removeVolumes = flags.volumes;
+    // const forceFlag = flags.force; // Use if confirmation is added
+
+    // Resolve stack identifier
+    const stackIdentifier = await this.getStackIdentifier(stackArg as string);
+
+    // Prepare options
+    const destroyOptions = {
+      removeVolumes: removeVolumes,
+      // force: forceFlag,
+    };
 
     try {
-      const stackIdentifier = await this.getStackIdentifier(stackArg);
-
-      if (!forceFlag) {
-        const response = await prompts({
-          type: 'confirm',
-          name: 'confirm',
-          message: `Are you sure you want to destroy the stack '${stackIdentifier}' and all its resources (containers, volumes, potentially build artifacts)? This action cannot be undone.`,
-          initial: false,
-        });
-
-        if (!response.confirm) {
-          this.log('Destroy operation cancelled by user.');
-          return; // Exit gracefully
-        }
-      }
-
-      this.log(`Attempting to destroy stack: ${stackIdentifier}`);
-
-      // Call the core destroy function
-      await coreDestroy(stackIdentifier);
-
-      this.log(`Stack destroy initiated successfully for: ${stackIdentifier}`);
+      // Instantiate and run executor
+      await destroy(stackIdentifier, { removeVolumes: flags.volumes });
+      this.log(`Destroy initiated for stack: ${stackIdentifier}`);
     } catch (error) {
-      await this.catch(error as Error);
+      this.error(
+        `Destroy failed: ${error instanceof Error ? error.message : String(error)}`,
+        { exit: 1 }
+      );
     }
   }
 }

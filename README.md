@@ -77,6 +77,7 @@ mv packages/cli/dist/index.js /usr/local/bin/devx
 ```
 
 The build process:
+
 1. Compiles TypeScript code
 2. Generates the oclif manifest
 3. Bundles the CLI and all plugins into a single executable
@@ -128,6 +129,19 @@ DevX can run as a daemon providing a REST API for programmatic control.
   - `POST /stacks/:name/build`
   - `DELETE /stacks/:name` (Destroy)
   - `GET /stacks/:name/config` (Get the config definition for the stack)
+
+> **Note:** The REST API server is not a standalone executable. The recommended way to run the REST API is via the CLI (`devx daemon start`), which handles dependency injection and server startup for you.
+>
+> For advanced/programmatic use, you can create and run the REST API server yourself:
+>
+> ```ts
+> import { createApp } from '@devx/rest';
+> import { logger } from '@devx/common';
+> import * as stackManager from '@devx/stack';
+>
+> const app = createApp({ stackManager, logger });
+> app.listen(3000);
+> ```
 
 ## Configuration
 

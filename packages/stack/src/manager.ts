@@ -1,16 +1,12 @@
-import { existsSync, promises as fs, readFileSync } from 'fs';
+import { existsSync, promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
-import { logger } from '@devx/common';
 import {
-  parseStackConfigFile,
   loadStackConfig as loadStackConfigFileContent,
   StackParseError,
-} from './parser';
+} from './parser.js';
 import type { StackConfig } from '@devx/common';
-import { StackConfigSchema } from '@devx/common';
-import { resolve } from 'path';
-import findUp from 'find-up';
+import { logger } from '@devx/common';
 
 /** Default filenames to search for stack configurations. */
 const DEFAULT_STACK_FILES = ['.stack.yml', '.stack.yaml', '.stack.json'];
@@ -139,22 +135,24 @@ export async function loadStackConfig(
     // Catch unknown for better type safety
     // Provide more context to the error based on where it originated
     let errorMessage = `Failed to load stack configuration from ${stackFilePath || identifier || 'local directory'}`;
+    let cause: Error | unknown = error;
+
+    // Type check the error
     if (error instanceof StackParseError) {
-      // Use the detailed message from StackParseError
       errorMessage += `: ${error.message}`;
-      // Use error.details for the cause, ensuring it's an Error if possible
-      const cause = error.details instanceof Error ? error.details : error;
-      throw new Error(errorMessage, { cause });
+      // Keep the specific error details if available
+      cause = error.details instanceof Error ? error.details : error;
     } else if (error instanceof Error) {
       errorMessage += `: ${error.message}`;
-      // error is already an Error instance here
-      throw new Error(errorMessage, { cause: error });
+      cause = error; // Keep the original error as cause
     } else {
-      // Handle non-Error exceptions
-      errorMessage += `: An unknown error occurred.`;
-      // Create a new error to wrap the unknown cause if it's meaningful
-      throw new Error(errorMessage, { cause: error });
+      // Handle non-Error objects if necessary
+      errorMessage += `: Unknown error occurred.`;
     }
+
+    logger.error(errorMessage, cause); // Log with cause
+    // Re-throw as a StackParseError, preserving the original cause if possible
+    throw new StackParseError(errorMessage, cause);
   }
 }
 

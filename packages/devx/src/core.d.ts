@@ -29,9 +29,12 @@ export declare function stop(stackIdentifier: string): Promise<void>;
  * @param options - Options for destruction, e.g., removing volumes.
  * @throws {Error} If the destroy process fails.
  */
-export declare function destroy(stackIdentifier: string, options?: {
+export declare function destroy(
+  stackIdentifier: string,
+  options?: {
     removeVolumes?: boolean;
-}): Promise<void>;
+  }
+): Promise<void>;
 /**
  * Gets the status of the specified stack using the configured engine plugin.
  *
@@ -39,4 +42,6 @@ export declare function destroy(stackIdentifier: string, options?: {
  * @returns The stack status information.
  * @throws {Error} If getting the status fails.
  */
-export declare function status(stackIdentifier: string): Promise<StackStatusInfo>;
+export declare function status(
+  stackIdentifier: string
+): Promise<StackStatusInfo>;

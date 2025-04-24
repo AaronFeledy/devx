@@ -2,8 +2,9 @@ import { join } from 'path';
 import { homedir } from 'os';
 import { existsSync, readdirSync, readFileSync } from 'fs';
 import { z } from 'zod';
-import { StackConfig, StackConfigSchema } from '@devx/stack';
+import { StackConfigSchema } from '@devx/stack';
 import { EnginePlugin, BuilderPlugin } from '@devx/common';
+import YAML from 'yaml';
 
 const GLOBAL_STACKS_DIR = join(homedir(), '.devx', 'global-stacks');
 
@@ -37,24 +38,51 @@ export class GlobalStackManager {
    * Load all global stacks from the configuration directory
    */
   private loadGlobalStacks(): void {
+    this.stacks.clear(); // Clear existing stacks before loading
+
     if (!existsSync(GLOBAL_STACKS_DIR)) {
+      console.warn(`Global stacks directory not found: ${GLOBAL_STACKS_DIR}`);
       return;
     }
 
-    const stackFiles = readdirSync(GLOBAL_STACKS_DIR).filter(
-      (file) => file.endsWith('.yml') || file.endsWith('.yaml')
-    );
+    let stackFiles: string[] = [];
+    try {
+      stackFiles = readdirSync(GLOBAL_STACKS_DIR).filter(
+        (file) => file.endsWith('.yml') || file.endsWith('.yaml')
+      );
+    } catch (error) {
+      console.error(
+        `Failed to read global stacks directory ${GLOBAL_STACKS_DIR}:`,
+        error
+      );
+      return;
+    }
 
     for (const file of stackFiles) {
+      const configPath = join(GLOBAL_STACKS_DIR, file);
       try {
-        const configPath = join(GLOBAL_STACKS_DIR, file);
-        const config = GlobalStackConfig.parse({
-          name: file.replace(/\.(yml|yaml)$/, ''),
-          config: readFileSync(configPath, 'utf-8'),
+        const fileContent = readFileSync(configPath, 'utf-8');
+        const parsedYaml = YAML.parse(fileContent);
+        const stackName = file.replace(/\.(yml|yaml)$/, '');
+
+        const result = GlobalStackConfig.safeParse({
+          name: stackName,
+          ...parsedYaml,
         });
-        this.stacks.set(config.name, config);
+
+        if (result.success) {
+          this.stacks.set(result.data.name, result.data);
+        } else {
+          console.error(
+            `Invalid configuration in global stack file ${file}:`,
+            result.error.flatten()
+          );
+        }
       } catch (error) {
-        console.error(`Failed to load global stack ${file}:`, error);
+        console.error(
+          `Failed to load or parse global stack file ${file}:`,
+          error
+        );
       }
     }
   }
@@ -69,10 +97,14 @@ export class GlobalStackManager {
 
     for (const stack of enabledStacks) {
       try {
-        await this.builder.build(stack.config);
-        await this.builder.start(stack.config);
+        const projectPath = join(GLOBAL_STACKS_DIR, stack.name);
+        await this.builder.build(stack.config, projectPath);
+        await this.builder.start(stack.config, projectPath);
       } catch (error) {
-        console.error(`Failed to start global stack ${stack.name}:`, error);
+        console.error(
+          `Failed to start global stack ${stack.name}:`,
+          error instanceof Error ? error.message : String(error)
+        );
       }
     }
   }
@@ -87,9 +119,13 @@ export class GlobalStackManager {
 
     for (const stack of stacks) {
       try {
-        await this.builder.stop(stack.config);
+        const projectPath = join(GLOBAL_STACKS_DIR, stack.name);
+        await this.builder.stop(stack.config, projectPath);
       } catch (error) {
-        console.error(`Failed to stop global stack ${stack.name}:`, error);
+        console.error(
+          `Failed to stop global stack ${stack.name}:`,
+          error instanceof Error ? error.message : String(error)
+        );
       }
     }
   }
@@ -102,10 +138,15 @@ export class GlobalStackManager {
 
     for (const [name, stack] of this.stacks) {
       try {
-        const stackStatus = await this.builder.status(stack.config);
+        const projectPath = join(GLOBAL_STACKS_DIR, name);
+        const stackStatus = await this.builder.generateConfig(
+          stack.config,
+          projectPath
+        );
         status[name] = stackStatus;
       } catch (error) {
-        status[name] = 'error';
+        status[name] =
+          `error: ${error instanceof Error ? error.message : String(error)}`;
       }
     }
 

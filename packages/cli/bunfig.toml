@@ -4,4 +4,10 @@ outdir = "dist"
 target = "bun"
 minify = true
 sourcemap = "inline"
-external = ["@oclif/core", "@oclif/plugin-legacy"] 
+external = ["@oclif/core", "@oclif/plugin-legacy"]
+
+[test]
+# Test configuration
+preload = ["../../test/setup.ts"]
+coverage = true
+timeout = 10000 # 10 seconds 

@@ -1,9 +1,9 @@
 import { Elysia, t } from 'elysia';
 import { cors } from '@elysiajs/cors';
 import { swagger } from '@elysiajs/swagger';
-import { logger } from '@devx/common';
-import type { StackConfig } from '@devx/common';
-import * as StackManager from '@devx/stack';
+import { type Logger } from '@devx/common';
+import * as StackManager from '@devx/stack'; // Import stack functions
+// Import types
 
 // --- Elysia/TypeBox Schema Mirroring Zod Schema ---
 // Restore full definitions from previous correct state
@@ -186,125 +186,174 @@ const ElysiaStackConfigSchema = t.Object(
   }
 );
 
-// --- Handlers (Defined BEFORE app) ---
-const getStacksHandler = async () => {
-  logger.info('GET /stacks');
-  return await StackManager.listStacks();
-};
+// --- Handlers Factory ---
+interface AppDependencies {
+  stackManager: typeof StackManager;
+  logger: Logger;
+}
 
-const getStackByIdHandler = async ({ params }: { params: { id: string } }) => {
-  logger.info(`GET /stacks/${params.id}`);
-  const stack = await StackManager.getStackStatus(params.id);
-  return stack;
-};
+const ErrorResponseSchema = t.Object({
+  error: t.String(),
+  details: t.Optional(t.Any()),
+});
 
-const createStackHandler = async ({ body }: { body: StackConfig }) => {
-  logger.info('POST /stacks request received', { name: body.name });
-  const createdStackName = await StackManager.createStack(body);
-  logger.info(`Stack created successfully: ${createdStackName}`);
-  return { message: 'Stack created successfully', name: createdStackName };
-};
+function createHandlers({ stackManager, logger }: AppDependencies) {
+  return {
+    listStacksHandler: async () => {
+      try {
+        return await stackManager.listStacks();
+      } catch (error) {
+        logger.error('API Error listing stacks:', error);
+        return { error: 'Failed to list stacks' }; // Simple error response
+      }
+    },
+    getStackByIdHandler: async ({ params }: { params: { id: string } }) => {
+      try {
+        const stack = await stackManager.getStackStatus(params.id);
+        if (!stack) return { error: 'Stack not found' }; // Or set status 404
+        return stack;
+      } catch (error) {
+        logger.error(`API Error getting stack ${params.id}:`, error);
+        return { error: 'Failed to get stack status' };
+      }
+    },
+    createStackHandler: async ({ body }: { body: { config: any } }) => {
+      // Assuming body has config object
+      try {
+        // TODO: Add validation for the config body (e.g., using Zod schema)
+        const newStack = await stackManager.createStack(body.config);
+        return newStack;
+      } catch (error) {
+        logger.error('API Error creating stack:', error);
+        return { error: 'Failed to create stack' };
+      }
+    },
+    startStackHandler: async ({ params }: { params: { id: string } }) => {
+      try {
+        await stackManager.startStack(params.id);
+        return { message: `Stack ${params.id} start initiated.` };
+      } catch (error) {
+        logger.error(`API Error starting stack ${params.id}:`, error);
+        return { error: 'Failed to start stack' };
+      }
+    },
+    stopStackHandler: async ({ params }: { params: { id: string } }) => {
+      try {
+        await stackManager.stopStack(params.id);
+        return { message: `Stack ${params.id} stop initiated.` };
+      } catch (error) {
+        logger.error(`API Error stopping stack ${params.id}:`, error);
+        return { error: 'Failed to stop stack' };
+      }
+    },
+    deleteStackHandler: async ({
+      params,
+      set,
+    }: {
+      params: { id: string };
+      set: any;
+    }) => {
+      // Type 'set' appropriately
+      try {
+        await stackManager.destroyStack(params.id);
+        set.status = 204; // No content on successful deletion
+        return;
+      } catch (error) {
+        logger.error(`API Error deleting stack ${params.id}:`, error);
+        return { error: 'Failed to delete stack' }; // Consider status 500
+      }
+    },
+  };
+}
 
-const startStackHandler = async ({ params }: { params: { id: string } }) => {
-  logger.info(`POST /stacks/${params.id}/start`);
-  await StackManager.startStack(params.id);
-  return { message: `Stack ${params.id} starting...` };
-};
+// --- App Factory ---
+/**
+ * Create a new Elysia app instance with injected dependencies.
+ * @param {object} deps - Dependencies for the app
+ * @param {object} deps.stackManager - Stack management API
+ * @param {object} deps.logger - Logger instance
+ * @returns {Elysia} Elysia app instance
+ */
+export function createApp({ stackManager, logger }: AppDependencies) {
+  const handlers = createHandlers({ stackManager, logger });
 
-const stopStackHandler = async ({ params }: { params: { id: string } }) => {
-  logger.info(`POST /stacks/${params.id}/stop`);
-  await StackManager.stopStack(params.id);
-  return { message: `Stack ${params.id} stopping...` };
-};
-
-const deleteStackHandler = async ({
-  params,
-  set,
-}: {
-  params: { id: string };
-  set: any;
-}) => {
-  logger.info(`DELETE /stacks/${params.id}`);
-  await StackManager.destroyStack(params.id);
-  set.status = 204;
-  return null;
-};
-
-// --- Elysia App Setup ---
-const app = new Elysia()
-  .use(cors())
-  .use(
-    swagger({
-      documentation: {
-        info: {
-          title: 'DevX REST API',
-          version: '0.1.0',
-          description:
-            'API for managing DevX development stacks and their lifecycle.',
-        },
-        tags: [
-          {
-            name: 'Stacks',
+  const app = new Elysia()
+    .use(cors())
+    .use(
+      swagger({
+        documentation: {
+          info: {
+            title: 'DevX REST API',
+            version: '0.1.0',
             description:
-              'Manage DevX stacks (build, start, stop, status, etc.)',
+              'API for managing DevX development stacks and their lifecycle.',
           },
-          { name: 'Health', description: 'API health checks' },
-        ],
+          tags: [
+            {
+              name: 'Stacks',
+              description:
+                'Manage DevX stacks (build, start, stop, status, etc.)',
+            },
+            { name: 'Health', description: 'API health checks' },
+          ],
+        },
+      })
+    )
+    .onError(({ code, error, set }) => {
+      // Check if error is an instance of Error before accessing message
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error(`API Request Error [${code}]: ${message}`, error);
+      set.status = 500;
+      return { error: 'Internal Server Error', details: message };
+    })
+    // --- Routes ---
+    .get('/stacks', handlers.listStacksHandler, {
+      detail: { tags: ['Stacks'], summary: 'List all known stacks' },
+    })
+    .post('/stacks', handlers.createStackHandler, {
+      body: ElysiaStackConfigSchema,
+      detail: {
+        tags: ['Stacks'],
+        summary: 'Create or update a stack from configuration',
       },
     })
-  )
-  .onError(({ code, error, set }) => {
-    const message = error instanceof Error ? error.message : String(error);
-    const stack = error instanceof Error ? error.stack : undefined;
-    logger.error('API Error:', { code, error: message, stack });
+    .get('/stacks/:id', handlers.getStackByIdHandler, {
+      params: t.Object({ id: t.String({ description: 'Stack name or ID' }) }),
+      detail: {
+        tags: ['Stacks'],
+        summary: 'Get the current status of a stack',
+      },
+    })
+    .post('/stacks/:id/start', handlers.startStackHandler, {
+      params: t.Object({ id: t.String({ description: 'Stack name or ID' }) }),
+      detail: { tags: ['Stacks'], summary: 'Start a stopped stack' },
+    })
+    .post('/stacks/:id/stop', handlers.stopStackHandler, {
+      params: t.Object({ id: t.String({ description: 'Stack name or ID' }) }),
+      detail: { tags: ['Stacks'], summary: 'Stop a running stack' },
+    })
+    .delete('/stacks/:id', handlers.deleteStackHandler, {
+      params: t.Object({ id: t.String({ description: 'Stack name or ID' }) }),
+      detail: {
+        tags: ['Stacks'],
+        summary: 'Destroy a stack (stop and remove resources)',
+      },
+    })
+    .get('/health', () => ({ status: 'ok' }), {
+      detail: { tags: ['Health'], summary: 'Check API health' },
+    });
 
-    if (code === 'VALIDATION') {
-      set.status = 400;
-      const validationDetails = (error as any).message || message;
-      return { error: 'Validation failed', details: validationDetails };
-    }
+  logger.info('DevX REST API initialized');
+  return app;
+}
 
-    set.status = 500;
-    return { error: 'Internal Server Error', details: message };
-  })
-  // --- Routes ---
-  .get('/stacks', getStacksHandler, {
-    detail: { tags: ['Stacks'], summary: 'List all known stacks' },
-  })
-  .post('/stacks', createStackHandler, {
-    // Use the mirrored Elysia schema
-    body: ElysiaStackConfigSchema,
-    detail: {
-      tags: ['Stacks'],
-      summary: 'Create or update a stack from configuration',
-    },
-  })
-  .get('/stacks/:id', getStackByIdHandler, {
-    params: t.Object({ id: t.String({ description: 'Stack name or ID' }) }),
-    detail: { tags: ['Stacks'], summary: 'Get the current status of a stack' },
-  })
-  .post('/stacks/:id/start', startStackHandler, {
-    params: t.Object({ id: t.String({ description: 'Stack name or ID' }) }),
-    detail: { tags: ['Stacks'], summary: 'Start a stopped stack' },
-  })
-  .post('/stacks/:id/stop', stopStackHandler, {
-    params: t.Object({ id: t.String({ description: 'Stack name or ID' }) }),
-    detail: { tags: ['Stacks'], summary: 'Stop a running stack' },
-  })
-  .delete('/stacks/:id', deleteStackHandler, {
-    params: t.Object({ id: t.String({ description: 'Stack name or ID' }) }),
-    detail: {
-      tags: ['Stacks'],
-      summary: 'Destroy a stack (stop and remove resources)',
-    },
-  })
-  .get('/health', () => ({ status: 'ok' }), {
-    detail: { tags: ['Health'], summary: 'Check API health' },
-  })
-  .listen(3000);
-
-logger.info(
-  `🦊 DevX REST API is running at http://${app.server?.hostname}:${app.server?.port}`
-);
-
-export type App = typeof app;
+// Optional: Main entry point for running the server directly
+/*
+if (import.meta.main) {
+  const logger = rootLogger; // Use the root logger
+  const app = createApp({ stackManager: StackManager, logger });
+  const port = process.env.PORT || 3000;
+  app.listen(port);
+  logger.info(`DevX REST API listening on http://localhost:${port}`);
+}
+*/

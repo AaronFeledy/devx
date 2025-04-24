@@ -20,7 +20,9 @@ export declare function saveDevxState(state: DevxState): Promise<void>;
  * @param stackName - The name of the stack.
  * @returns The StackState object if found, otherwise undefined.
  */
-export declare function getStackState(stackName: string): Promise<StackState | undefined>;
+export declare function getStackState(
+  stackName: string
+): Promise<StackState | undefined>;
 /**
  * Updates the state for a specific stack.
  * Creates a new entry if the stack doesn't exist in the state.
@@ -29,9 +31,14 @@ export declare function getStackState(stackName: string): Promise<StackState | u
  * @param stackName - The name of the stack to update.
  * @param update - A partial StackState object containing the changes.
  */
-export declare function updateStackState(stackName: string, update: Partial<Omit<StackState, 'name' | 'configPath'> & {
-    configPath?: string;
-}>): Promise<void>;
+export declare function updateStackState(
+  stackName: string,
+  update: Partial<
+    Omit<StackState, 'name' | 'configPath'> & {
+      configPath?: string;
+    }
+  >
+): Promise<void>;
 /**
  * Removes a stack's state from the state file.
  *
@@ -45,4 +52,7 @@ export declare function removeStackState(stackName: string): Promise<void>;
  * @param configPath - The absolute path to the configuration file.
  * @returns A new StackState object.
  */
-export declare function getInitialStackState(stackConfig: StackConfig, configPath: string): StackState;
+export declare function getInitialStackState(
+  stackConfig: StackConfig,
+  configPath: string
+): StackState;

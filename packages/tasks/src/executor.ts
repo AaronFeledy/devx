@@ -1,4 +1,4 @@
-import { Task, TaskStep, TaskResult, Command, CommandSchema } from './types';
+import { Task, TaskStep, Command, TaskResult, TaskSchema } from './types';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -11,14 +11,15 @@ const execAsync = promisify(exec);
  */
 async function executeCommand(command: Command): Promise<void> {
   const { exec: cmd, env = 'bash', container } = command;
-  
+
   if (container) {
     // Execute in container
     const containerCmd = `podman exec ${container} ${env} -c "${cmd}"`;
     await execAsync(containerCmd);
   } else {
     // Execute on host
-    const hostCmd = env === 'bash' ? `bash -c "${cmd}"` : `powershell -Command "${cmd}"`;
+    const hostCmd =
+      env === 'bash' ? `bash -c "${cmd}"` : `powershell -Command "${cmd}"`;
     await execAsync(hostCmd);
   }
 }
@@ -82,4 +83,4 @@ export class TaskExecutor {
       };
     }
   }
-} 
+}

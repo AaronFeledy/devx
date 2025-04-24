@@ -1,0 +1,9 @@
+[test]
+# Test configuration
+preload = ["./test/setup.ts"] # Global setup
+coverage = true
+timeout = 10000 # 10 seconds
+
+# Add package-specific preload if needed, but Bun doesn't support this directly in bunfig.
+# Instead, run tests with --preload flag from within the package directory.
+# Example: cd packages/engine && bun test --preload ./test/preload.ts 

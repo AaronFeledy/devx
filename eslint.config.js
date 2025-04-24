@@ -1,48 +1,84 @@
 import globals from 'globals';
 import * as tseslint from 'typescript-eslint';
+import unusedImports from 'eslint-plugin-unused-imports';
 
 export default tseslint.config(
   {
     // Configures files to be linted
-    files: ['**/*.ts'], // Adjust glob patterns if necessary for your project structure
+    files: [
+      'packages/*/src/**/*.ts',
+      'packages/*/test/**/*.ts',
+      'plugins/*/src/**/*.ts',
+      'plugins/*/test/**/*.ts',
+      '**/__tests__/**/*.ts',
+    ],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        // Use projectService for better monorepo/project reference support
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname, // Explicitly set root directory
+        project: [
+          './packages/builder/tsconfig.json',
+          './packages/cli/tsconfig.json',
+          './packages/common/tsconfig.json',
+          './packages/devx/tsconfig.json',
+          './packages/engine/tsconfig.json',
+          './packages/global-stacks/tsconfig.json',
+          './packages/recipes/tsconfig.json',
+          './packages/rest/tsconfig.json',
+          './packages/stack/tsconfig.json',
+          './packages/tasks/tsconfig.json',
+          './plugins/podman/tsconfig.json',
+          './plugins/podman-compose/tsconfig.json',
+          './plugins/router/tsconfig.json',
+        ],
       },
       globals: {
-        ...globals.node, // Adds Node.js global variables
+        ...globals.node,
+        ...globals.jest, // Add Jest globals for test files
       },
     },
     plugins: {
       '@typescript-eslint': tseslint.plugin,
+      'unused-imports': unusedImports,
     },
     rules: {
-      // Base ESLint recommended rules
       ...tseslint.configs.eslintRecommended.rules,
-      // TypeScript-specific recommended rules
       ...tseslint.configs.recommended.rules,
-      // Add any project-specific rule overrides here
-      // Example:
-      // "@typescript-eslint/no-unused-vars": "warn",
-      // "@typescript-eslint/no-explicit-any": "off",
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          args: 'after-used',
+          ignoreRestSiblings: true,
+          varsIgnorePattern: '^_',
+          argsIgnorePattern: '^_',
+        },
+      ],
+      'unused-imports/no-unused-imports': 'warn',
+      'unused-imports/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+        },
+      ],
     },
   },
   {
-    // Global ignores
     ignores: [
-      'node_modules/**',
-      'dist/**',
-      'packages/*/dist/**',
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/coverage/**',
+      '**/test/**/__mocks__/**',
+      '**/test/**/__fixtures__/**',
       'packages/cli/oclif.manifest.json',
-      'plugins/*/dist/**',
       'bun.lockb',
-      'packages/*/bun.lockb',
-      'tsconfig.tsbuildinfo',
-      'packages/*/tsconfig.tsbuildinfo',
-      './index.ts', // Ignore root index.ts
+      '**/bun.lockb',
+      '**/tsconfig.tsbuildinfo',
+      './index.ts',
+      '**/*.d.ts', // Ignore declaration files
+      '**/*.js', // Ignore JavaScript files
     ],
   }
 );

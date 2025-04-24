@@ -49,16 +49,19 @@ machine_enabled = true  # For macOS/Windows
 ## Platform Support
 
 ### Linux
+
 - Supports rootless containers if user namespaces are enabled
 - Uses native Podman installation
 - No VM required
 
 ### macOS
+
 - Requires VM for container runtime
 - Uses Podman machine for VM management
 - Automatic VM setup and configuration
 
 ### Windows
+
 - Requires WSL 2
 - Uses Podman within WSL 2
 - Automatic WSL 2 configuration
@@ -79,17 +82,17 @@ await plugin.start({
 
 // Get container status
 const status = await plugin.status({
-  name: 'my-stack'
+  name: 'my-stack',
 });
 
 // Stop containers
 await plugin.stop({
-  name: 'my-stack'
+  name: 'my-stack',
 });
 
 // Clean up
 await plugin.destroy({
-  name: 'my-stack'
+  name: 'my-stack',
 });
 ```
 
@@ -98,11 +101,13 @@ await plugin.destroy({
 ### Common Issues
 
 1. **Permission Denied**
+
    - Ensure user namespaces are enabled on Linux
    - Check WSL 2 installation on Windows
    - Verify VM permissions on macOS
 
 2. **VM Issues**
+
    - Restart Podman machine: `podman machine stop && podman machine start`
    - Check VM logs: `podman machine logs`
 
@@ -135,7 +140,3 @@ Build the plugin with:
 ```bash
 bun run build
 ```
-
-## License
-
-Apache 2.0 

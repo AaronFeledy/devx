@@ -80,3 +80,13 @@ To add support for a new orchestrator:
     - Implement the `build`, `start`, `stop`, and `destroy` methods using the orchestrator's CLI commands or API (potentially using a shared `runCommand` utility).
 3.  Register an instance of your new plugin in `src/index.ts`.
 4.  Add tests for your plugin.
+
+## Testing
+
+To run unit tests for this package:
+
+```sh
+bun run test
+```
+
+This will execute all tests in the `test/` directory using Bun's test runner. Ensure you have Bun installed and all dependencies are installed via `bun install`.

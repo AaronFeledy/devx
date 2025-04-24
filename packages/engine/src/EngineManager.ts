@@ -1,4 +1,6 @@
-import type { EnginePlugin } from '@devx/common';
+import type { EnginePlugin, Plugin } from '@devx/common';
+// Re-export the type for use in other modules within the package
+export type { EnginePlugin };
 import { pluginManager } from '@devx/common';
 import { logger } from '@devx/common';
 
@@ -60,7 +62,7 @@ export class EngineManager {
    * @returns An array of registered engine plugin names.
    */
   listPlugins(): string[] {
-    return pluginManager.getEnginePlugins().map((p) => p.engine!.name);
+    return pluginManager.getEnginePlugins().map((p: Plugin) => p.engine!.name);
   }
 }
 

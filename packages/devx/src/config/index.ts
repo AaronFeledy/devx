@@ -2,7 +2,7 @@ import { homedir } from 'os';
 import { join } from 'path';
 import type { GlobalConfig } from './types.js';
 import { GlobalConfigSchema } from './types.js';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync } from 'fs';
 
 // Export the type separately
 export type { GlobalConfig } from './types.js';

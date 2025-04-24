@@ -3,7 +3,6 @@ import { join } from 'path';
 import type { StackConfig } from '@devx/common';
 import { StackStatus } from '@devx/common';
 import { existsSync, mkdirSync } from 'fs';
-import { StateManager } from './StateManager.js';
 export * from './types.js';
 
 // Import schemas and enums as values, types as types
@@ -47,23 +46,43 @@ export async function loadDevxState(): Promise<DevxState> {
     return currentState; // Return cached state if available
   }
 
+  const stateFilePath = process.env.DEVX_STATE_DIR
+    ? join(process.env.DEVX_STATE_DIR, 'state.json')
+    : STATE_FILE_PATH;
+
   try {
-    const stateFile = Bun.file(STATE_FILE_PATH);
+    const stateFile = Bun.file(stateFilePath);
     if (!(await stateFile.exists())) {
       console.debug(
-        `State file not found at ${STATE_FILE_PATH}. Initializing empty state.`
+        `State file not found at ${stateFilePath}. Initializing empty state.`
       );
       currentState = {};
       return {};
     }
 
     const content = await stateFile.json();
-    // Need to handle date deserialization manually if needed, or store as ISO strings
-    const parsedState = DevxStateSchema.safeParse(content);
+    // Convert date strings back to Date objects
+    const processedContent = Object.fromEntries(
+      Object.entries(content).map(([key, value]: [string, any]) => [
+        key,
+        {
+          ...value,
+          lastBuiltAt: value.lastBuiltAt
+            ? new Date(value.lastBuiltAt)
+            : new Date(0),
+          lastStartedAt: value.lastStartedAt
+            ? new Date(value.lastStartedAt)
+            : new Date(0),
+          manifestPath: value.manifestPath || '',
+        },
+      ])
+    );
+
+    const parsedState = DevxStateSchema.safeParse(processedContent);
 
     if (!parsedState.success) {
       console.error(
-        `Invalid state file at ${STATE_FILE_PATH}:`,
+        `Invalid state file at ${stateFilePath}:`,
         parsedState.error.errors
       );
       console.warn('Initializing empty state due to invalid file.');
@@ -71,12 +90,11 @@ export async function loadDevxState(): Promise<DevxState> {
       return {};
     }
 
-    console.debug(`Loaded state from ${STATE_FILE_PATH}`);
-    // TODO: Potentially revive Date objects if stored as strings
+    console.debug(`Loaded state from ${stateFilePath}`);
     currentState = parsedState.data;
     return parsedState.data;
   } catch (error) {
-    console.error(`Error loading state file ${STATE_FILE_PATH}:`, error);
+    console.error(`Error loading state file ${stateFilePath}:`, error);
     console.warn('Initializing empty state due to error.');
     currentState = {};
     return {};
@@ -90,16 +108,30 @@ export async function loadDevxState(): Promise<DevxState> {
  */
 export async function saveDevxState(state: DevxState): Promise<void> {
   ensureDevxDirExists();
+  const stateFilePath = process.env.DEVX_STATE_DIR
+    ? join(process.env.DEVX_STATE_DIR, 'state.json')
+    : STATE_FILE_PATH;
+
   try {
-    // Validate before saving (optional)
+    // Validate before saving
     const validatedState = DevxStateSchema.parse(state);
-    // TODO: Potentially stringify Date objects before saving
-    const content = JSON.stringify(validatedState, null, 2); // Pretty print
-    await Bun.write(STATE_FILE_PATH, content);
+    // Convert dates to ISO strings for storage
+    const processedState = Object.fromEntries(
+      Object.entries(validatedState).map(([key, value]: [string, any]) => [
+        key,
+        {
+          ...value,
+          lastBuiltAt: value.lastBuiltAt.toISOString(),
+          lastStartedAt: value.lastStartedAt.toISOString(),
+        },
+      ])
+    );
+    const content = JSON.stringify(processedState, null, 2); // Pretty print
+    await Bun.write(stateFilePath, content);
     currentState = validatedState; // Update cache
-    console.debug(`Saved state to ${STATE_FILE_PATH}`);
+    console.debug(`Saved state to ${stateFilePath}`);
   } catch (error) {
-    console.error(`Failed to save state to ${STATE_FILE_PATH}:`, error);
+    console.error(`Failed to save state to ${stateFilePath}:`, error);
     throw new Error(`Failed to save state: ${error}`);
   }
 }
@@ -185,7 +217,9 @@ export function getInitialStackState(
     configPath: configPath,
     buildStatus: StackBuildStatus.NotBuilt,
     runtimeStatus: StackStatus.Unknown,
-    lastStartedAt: null,
+    lastBuiltAt: new Date(0),
+    lastStartedAt: new Date(0),
+    manifestPath: '',
     lastError: null,
   });
 }

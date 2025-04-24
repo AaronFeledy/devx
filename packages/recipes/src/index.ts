@@ -1,5 +1,5 @@
-import { Recipe, RecipeOption, RecipeManifest, RecipeSchema } from './types';
-import { lampRecipe } from './recipes/lamp';
+import { Recipe, RecipeOption, RecipeManifest } from './types.js';
+import { lampRecipe } from './recipes/lamp.js';
 
 export type { Recipe, RecipeOption, RecipeManifest };
 
@@ -22,4 +22,12 @@ export function getRecipe(name: string) {
     throw new Error(`Recipe "${name}" not found`);
   }
   return recipe;
-} 
+}
+
+/**
+ * Lists available recipes.
+ * @returns An array of Recipe objects.
+ */
+export function listRecipes(): Recipe[] {
+  return Object.values(recipes);
+}

@@ -1,23 +1,23 @@
 {
-    "name": "@devx/tasks",
-    "version": "0.1.0",
-    "description": "Transactional task execution system for DevX",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "scripts": {
-        "build": "tsc",
-        "test": "bun test",
-        "lint": "eslint src/**/*.ts",
-        "format": "prettier --write src/**/*.ts"
-    },
-    "dependencies": {
-        "@devx/common": "workspace:*",
-        "zod": "^3.22.4"
-    },
-    "devDependencies": {
-        "@types/node": "^20.11.19",
-        "typescript": "^5.3.3",
-        "eslint": "^8.56.0",
-        "prettier": "^3.2.5"
-    }
+  "name": "@devx/tasks",
+  "version": "0.1.0",
+  "description": "Transactional task execution system for DevX",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "bun test",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts"
+  },
+  "dependencies": {
+    "@devx/common": "workspace:*",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "typescript": "^5.3.3",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.5"
+  }
 }

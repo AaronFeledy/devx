@@ -38,7 +38,7 @@ const stackConfig = await lampRecipe.init({
   web: 'nginx',
   php: '8.1',
   dbVersion: '14',
-  webVersion: '1.25'
+  webVersion: '1.25',
 });
 ```
 
@@ -67,4 +67,4 @@ export class MyRecipe implements Recipe {
 
 ## Error Handling
 
-The package provides a `RecipeError` class for handling recipe-specific errors. All recipes should throw this error type when encountering issues during initialization. 
+The package provides a `RecipeError` class for handling recipe-specific errors. All recipes should throw this error type when encountering issues during initialization.

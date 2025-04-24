@@ -1,4 +1,4 @@
-import { Plugin } from './types';
+import { Plugin } from './types.js';
 
 /**
  * Manages the registration and retrieval of DevX plugins.

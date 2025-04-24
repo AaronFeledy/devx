@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { StackConfig } from '@devx/stack';
 
 /**
  * Options that can be passed to recipe initialization
@@ -39,11 +38,15 @@ export const RecipeSchema = z.object({
   name: z.string(),
   description: z.string(),
   stack: z.record(z.any()),
-  options: z.record(z.object({
-    description: z.string(),
-    default: z.string().optional(),
-    choices: z.array(z.string()).optional(),
-  })).optional(),
+  options: z
+    .record(
+      z.object({
+        description: z.string(),
+        default: z.string().optional(),
+        choices: z.array(z.string()).optional(),
+      })
+    )
+    .optional(),
 });
 
 /**
@@ -66,4 +69,4 @@ export class RecipeError extends Error {
     super(message);
     this.name = 'RecipeError';
   }
-} 
+}

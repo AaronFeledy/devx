@@ -10,21 +10,14 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "@devx/*": [
-        "../*/src"
-      ]
+      "@devx/*": ["../*/src"]
     }
   },
   "ts-node": {
     "esm": true
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ],
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
   "references": [
     {
       "path": "../recipes"
@@ -43,6 +36,9 @@
     },
     {
       "path": "../engine"
+    },
+    {
+      "path": "../tasks"
     }
   ]
 }

@@ -8,8 +8,8 @@ export type { Plugin } from '@devx/common';
 export type { StackConfig, ServiceConfig } from '@devx/common';
 export type { StackStatusInfo, StackStatus } from '@devx/common';
 export declare enum StackBuildStatus {
-    NotBuilt = "not_built",
-    Building = "building",
-    Built = "built",
-    Error = "error"
+  NotBuilt = 'not_built',
+  Building = 'building',
+  Built = 'built',
+  Error = 'error',
 }

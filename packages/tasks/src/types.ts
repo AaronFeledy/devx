@@ -62,4 +62,4 @@ export const TaskSchema = z.object({
   name: z.string(),
   steps: z.array(z.union([z.function(), CommandSchema])),
   rollback: z.array(z.union([z.function(), CommandSchema])).optional(),
-}); 
+});
